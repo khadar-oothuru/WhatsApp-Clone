@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
-/* WhatsApp Web Color Variables */
+/* WhatsApp Web Color Variables - Dark Theme (Default for chat) */
 :root {
-  /* Background colors */
+  /* Dark theme colors (for chat interface) */
   --wa-bg: #0b141a;
   --wa-panel-header: #2a2f32;
   --wa-panel: #111b21;
@@ -36,6 +36,45 @@
   /* Shadow colors */
   --wa-shadow: rgba(11, 20, 26, 0.5);
   --wa-shadow-light: rgba(11, 20, 26, 0.2);
+  
+  /* Enhanced shadows for exact WhatsApp match */
+  --shadow-wa: 0 1px 2px 0 rgba(11, 20, 26, 0.3);
+  --shadow-wa-lg: 0 4px 14px 0 rgba(11, 20, 26, 0.4), 0 2px 4px 0 rgba(11, 20, 26, 0.2);
+  --shadow-wa-hover: 0 6px 20px 0 rgba(11, 20, 26, 0.5), 0 3px 6px 0 rgba(11, 20, 26, 0.3);
+  
+  /* Light theme colors (for landing/auth pages) */
+  --light-bg: #ffffff;
+  --light-bg-secondary: #f0f2f5;
+  --light-bg-tertiary: #e4e6eb;
+  --light-panel: #ffffff;
+  --light-panel-header: #ffffff;
+  --light-input: #f0f2f5;
+  --light-input-focus: #ffffff;
+  
+  /* Light theme text colors */
+  --light-text: #111b21;
+  --light-text-secondary: #667781;
+  --light-text-tertiary: #8696a0;
+  --light-text-muted: #aebac1;
+  
+  /* Light theme border colors */
+  --light-border: #e9edef;
+  --light-border-strong: #d1d7db;
+  --light-border-subtle: #f0f2f5;
+  
+  /* Light theme shadow colors */
+  --light-shadow: rgba(0, 0, 0, 0.08);
+  --light-shadow-strong: rgba(0, 0, 0, 0.12);
+  --light-shadow-subtle: rgba(0, 0, 0, 0.04);
+  
+  /* Light theme accent colors */
+  --light-accent: #00a884;
+  --light-accent-hover: #008069;
+  --light-accent-light: #d9fdd3;
+  --light-accent-bg: #f0fdf4;
+  
+  /* Transition timing */
+  --theme-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Custom Utility Classes */
@@ -65,8 +104,9 @@
   --color-wa-typing: var(--wa-typing);
   --color-wa-unread: var(--wa-unread);
   
-  --shadow-wa: 0 1px 2px 0 var(--wa-shadow);
-  --shadow-wa-lg: 0 4px 14px 0 var(--wa-shadow), 0 2px 4px 0 var(--wa-shadow-light);
+  --shadow-wa: var(--shadow-wa);
+  --shadow-wa-lg: var(--shadow-wa-lg);
+  --shadow-wa-hover: var(--shadow-wa-hover);
   --shadow-message: 0 1px 0.5px var(--wa-shadow-light), 0 1px 1px var(--wa-shadow);
   
   --font-family-sans: "Segoe UI", "Helvetica Neue", Helvetica, "Lucida Grande", Arial, "Ubuntu", "Cantarell", "Fira Sans", sans-serif;
@@ -90,7 +130,196 @@
   background: var(--wa-text);
 }
 
-/* Animations */
+/* Light theme scrollbar */
+.light-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.light-scrollbar::-webkit-scrollbar-track {
+  background: var(--light-bg-secondary);
+  border-radius: 4px;
+}
+
+.light-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--light-border-strong);
+  border-radius: 4px;
+  transition: var(--theme-transition);
+}
+
+.light-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--light-text-secondary);
+}
+
+/* Light theme classes */
+.light-theme {
+  background-color: var(--light-bg);
+  color: var(--light-text);
+  transition: var(--theme-transition);
+}
+
+.light-theme-secondary {
+  background-color: var(--light-bg-secondary);
+  color: var(--light-text);
+  transition: var(--theme-transition);
+}
+
+.light-theme-panel {
+  background-color: var(--light-panel);
+  border-color: var(--light-border);
+  transition: var(--theme-transition);
+}
+
+.light-theme-input {
+  background-color: var(--light-input);
+  border-color: var(--light-border);
+  color: var(--light-text);
+  transition: var(--theme-transition);
+}
+
+.light-theme-input:focus {
+  background-color: var(--light-input-focus);
+  border-color: var(--light-accent);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 168, 132, 0.1);
+}
+
+.light-theme-text {
+  color: var(--light-text);
+  transition: var(--theme-transition);
+}
+
+.light-theme-text-secondary {
+  color: var(--light-text-secondary);
+  transition: var(--theme-transition);
+}
+
+.light-theme-text-tertiary {
+  color: var(--light-text-tertiary);
+  transition: var(--theme-transition);
+}
+
+.light-theme-border {
+  border-color: var(--light-border);
+  transition: var(--theme-transition);
+}
+
+.light-theme-border-strong {
+  border-color: var(--light-border-strong);
+  transition: var(--theme-transition);
+}
+
+.light-theme-button {
+  background-color: var(--light-accent);
+  color: white;
+  transition: var(--theme-transition);
+}
+
+.light-theme-button:hover {
+  background-color: var(--light-accent-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--light-shadow);
+}
+
+.light-theme-button:active {
+  transform: translateY(0);
+}
+
+.light-theme-button-secondary {
+  background-color: var(--light-bg-secondary);
+  color: var(--light-text);
+  border: 1px solid var(--light-border);
+  transition: var(--theme-transition);
+}
+
+.light-theme-button-secondary:hover {
+  background-color: var(--light-bg-tertiary);
+  border-color: var(--light-border-strong);
+}
+
+.light-theme-card {
+  background-color: var(--light-panel);
+  border: 1px solid var(--light-border);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px var(--light-shadow-subtle);
+  transition: var(--theme-transition);
+}
+
+.light-theme-card:hover {
+  box-shadow: 0 4px 16px var(--light-shadow);
+}
+
+.light-theme-shadow {
+  box-shadow: 0 2px 8px var(--light-shadow);
+}
+
+.light-theme-shadow-strong {
+  box-shadow: 0 4px 24px var(--light-shadow-strong);
+}
+
+.light-theme-shadow-subtle {
+  box-shadow: 0 1px 4px var(--light-shadow-subtle);
+}
+
+/* Light theme link styles */
+.light-theme-link {
+  color: var(--light-accent);
+  text-decoration: none;
+  transition: var(--theme-transition);
+}
+
+.light-theme-link:hover {
+  color: var(--light-accent-hover);
+  text-decoration: underline;
+}
+
+/* Light theme badge/chip */
+.light-theme-badge {
+  background-color: var(--light-accent-bg);
+  color: var(--light-accent);
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: var(--theme-transition);
+}
+
+/* Light theme divider */
+.light-theme-divider {
+  border-color: var(--light-border);
+  transition: var(--theme-transition);
+}
+
+/* Theme transition utilities */
+.theme-transition {
+  transition: var(--theme-transition);
+}
+
+.theme-transition-colors {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
+.theme-transition-shadow {
+  transition-property: box-shadow, transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
+/* Preserve dark theme for chat interface */
+.dark-theme-preserve {
+  background-color: var(--wa-bg) !important;
+  color: var(--wa-text) !important;
+}
+
+.dark-theme-preserve * {
+  --current-bg: var(--wa-bg);
+  --current-text: var(--wa-text);
+  --current-border: var(--wa-border);
+}
+
+/* Animations - Smooth and polished like WhatsApp */
 @keyframes fade-in {
   from {
     opacity: 0;
@@ -99,6 +328,17 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes fade-in-scale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
@@ -129,15 +369,19 @@
 }
 
 .animate-fade-in {
-  animation: fade-in 0.3s ease-out;
+  animation: fade-in 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.animate-fade-in-scale {
+  animation: fade-in-scale 0.35s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
 .animate-slide-up {
-  animation: slide-up 0.4s ease-out;
+  animation: slide-up 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
 .animate-bounce-gentle {
-  animation: bounce-gentle 2s infinite;
+  animation: bounce-gentle 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 /* Responsive Design */
@@ -158,10 +402,20 @@
   outline-offset: 2px;
 }
 
+.light-focus-ring:focus-visible {
+  outline: 2px solid var(--light-accent);
+  outline-offset: 2px;
+}
+
 /* Text selection */
 ::selection {
   background-color: var(--wa-primary);
   color: white;
+}
+
+.light-theme ::selection {
+  background-color: var(--light-accent-light);
+  color: var(--light-text);
 }
 
 /* Chat background pattern */
@@ -174,15 +428,28 @@
   animation: slide-up 0.2s ease-out;
 }
 
-/* Loading spinner */
+/* Loading spinner - WhatsApp style */
 @keyframes spin {
   to {
     transform: rotate(360deg);
   }
 }
 
+@keyframes spin-smooth {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
 .animate-spin {
   animation: spin 1s linear infinite;
+}
+
+.animate-spin-smooth {
+  animation: spin-smooth 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
 }
 
 /* Typing indicator */
@@ -232,5 +499,103 @@
 /* Dark mode compatibility (already dark by default) */
 @media (prefers-color-scheme: light) {
   /* Keep dark theme as default for WhatsApp Web aesthetic */
+}
+
+/* Light theme gradient backgrounds */
+.light-gradient-primary {
+  background: linear-gradient(135deg, var(--light-accent-bg) 0%, var(--light-bg) 100%);
+}
+
+.light-gradient-secondary {
+  background: linear-gradient(135deg, var(--light-bg) 0%, var(--light-bg-secondary) 100%);
+}
+
+/* Light theme hover states */
+.light-hover-bg:hover {
+  background-color: var(--light-bg-secondary);
+  transition: var(--theme-transition);
+}
+
+.light-hover-border:hover {
+  border-color: var(--light-accent);
+  transition: var(--theme-transition);
+}
+
+/* Animated theme switch */
+@keyframes theme-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.theme-fade-in {
+  animation: theme-fade-in 0.3s ease-out;
+}
+
+/* Light theme form elements */
+.light-theme-select {
+  background-color: var(--light-input);
+  border: 1px solid var(--light-border);
+  color: var(--light-text);
+  transition: var(--theme-transition);
+}
+
+.light-theme-select:focus {
+  border-color: var(--light-accent);
+  outline: none;
+}
+
+.light-theme-checkbox {
+  accent-color: var(--light-accent);
+}
+
+.light-theme-radio {
+  accent-color: var(--light-accent);
+}
+
+/* Light theme tooltip */
+.light-theme-tooltip {
+  background-color: var(--light-text);
+  color: var(--light-bg);
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  box-shadow: 0 2px 8px var(--light-shadow-strong);
+}
+
+/* Light theme modal overlay */
+.light-theme-overlay {
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+/* Light theme success/error states */
+.light-theme-success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.light-theme-error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.light-theme-warning {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeeba;
+}
+
+.light-theme-info {
+  background-color: #d1ecf1;
+  color: #0c5460;
+  border: 1px solid #bee5eb;
 }
 

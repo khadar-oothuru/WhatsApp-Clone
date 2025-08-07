@@ -7,7 +7,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        // WhatsApp Web authentic colors
+        // WhatsApp Web authentic colors - Dark theme (existing)
         'wa-bg': '#0b141a',
         'wa-panel': '#202c33',
         'wa-panel-header': '#2a3942',
@@ -24,6 +24,21 @@ export default {
         'wa-input': '#2a3942',
         'wa-hover': '#182229',
         'wa-active': '#2a3942',
+        
+        // WhatsApp Web authentic colors - Light theme
+        'wa-light-bg': '#f0f2f5',
+        'wa-light-panel': '#ffffff',
+        'wa-light-panel-header': '#ffffff',
+        'wa-light-border': '#e9edef',
+        'wa-light-text': '#111b21',
+        'wa-light-text-secondary': '#667781',
+        'wa-light-green': '#25d366',
+        'wa-light-green-dark': '#128c7e',
+        'wa-light-bubble-out': '#d9fdd3',
+        'wa-light-bubble-in': '#ffffff',
+        'wa-light-input': '#ffffff',
+        'wa-light-hover': '#f5f6f6',
+        'wa-light-active': '#e9edef',
         'wa-green': {
           50: '#e6fffa',
           100: '#b3f5e8',

@@ -64,34 +64,32 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen bg-wa-bg flex items-center justify-center py-4 px-4">
-      <div className="absolute inset-0 bg-wa-pattern opacity-10"></div>
-
+    <div className="min-h-screen bg-[#f0f2f5] flex items-center justify-center py-4 px-4">
       <div className="relative w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-6">
-            <div className="w-20 h-20 bg-wa-primary rounded-full flex items-center justify-center shadow-wa-lg">
+            <div className="w-20 h-20 bg-[#00a884] rounded-full flex items-center justify-center shadow-lg">
               <FaWhatsapp className="w-10 h-10 text-white" />
             </div>
           </div>
-          <h1 className="text-3xl font-light text-wa-text mb-3">
+          <h1 className="text-3xl font-light text-gray-800 mb-3">
             Join WhatsApp Web
           </h1>
-          <p className="text-wa-text-secondary text-sm leading-relaxed">
+          <p className="text-gray-600 text-sm leading-relaxed">
             Create your account to start messaging
           </p>
         </div>
 
         {/* Register Form */}
-        <div className="bg-wa-panel shadow-wa-lg rounded-lg p-8 border border-wa-border">
+        <div className="bg-white shadow-lg rounded-lg p-8">
           <form className="space-y-6" onSubmit={handleSubmit}>
             {(error || passwordError) && (
-              <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-lg text-sm animate-fade-in">
+              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm animate-fade-in">
                 <div className="flex">
                   <div className="flex-shrink-0">
                     <svg
-                      className="h-5 w-5 text-red-400"
+                      className="h-5 w-5 text-red-600"
                       viewBox="0 0 20 20"
                       fill="currentColor"
                     >
@@ -103,7 +101,7 @@ const Register = () => {
                     </svg>
                   </div>
                   <div className="ml-3">
-                    <h3 className="text-sm font-medium text-red-400">
+                    <h3 className="text-sm font-medium text-red-600">
                       {error || passwordError}
                     </h3>
                   </div>
@@ -115,7 +113,7 @@ const Register = () => {
               <div>
                 <label
                   htmlFor="username"
-                  className="block text-sm font-medium text-wa-text mb-2"
+                  className="block text-sm font-medium text-gray-700 mb-2"
                 >
                   Username
                 </label>
@@ -125,7 +123,7 @@ const Register = () => {
                   type="text"
                   required
                   autoComplete="username"
-                  className="w-full px-4 py-3 bg-wa-input border border-wa-border rounded-lg text-wa-text placeholder-wa-text-tertiary focus:outline-none focus:border-wa-primary focus:ring-1 focus:ring-wa-primary transition-colors duration-200"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#00a884] focus:ring-1 focus:ring-[#00a884] transition-colors duration-200"
                   placeholder="Choose a username"
                   value={formData.username}
                   onChange={handleChange}
@@ -135,7 +133,7 @@ const Register = () => {
               <div>
                 <label
                   htmlFor="email"
-                  className="block text-sm font-medium text-wa-text mb-2"
+                  className="block text-sm font-medium text-gray-700 mb-2"
                 >
                   Email Address
                 </label>
@@ -145,7 +143,7 @@ const Register = () => {
                   type="email"
                   required
                   autoComplete="email"
-                  className="w-full px-4 py-3 bg-wa-input border border-wa-border rounded-lg text-wa-text placeholder-wa-text-tertiary focus:outline-none focus:border-wa-primary focus:ring-1 focus:ring-wa-primary transition-colors duration-200"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#00a884] focus:ring-1 focus:ring-[#00a884] transition-colors duration-200"
                   placeholder="Enter your email address"
                   value={formData.email}
                   onChange={handleChange}
@@ -155,7 +153,7 @@ const Register = () => {
               <div>
                 <label
                   htmlFor="password"
-                  className="block text-sm font-medium text-wa-text mb-2"
+                  className="block text-sm font-medium text-gray-700 mb-2"
                 >
                   Password
                 </label>
@@ -166,14 +164,14 @@ const Register = () => {
                     type={showPassword ? "text" : "password"}
                     required
                     autoComplete="new-password"
-                    className="w-full px-4 py-3 pr-12 bg-wa-input border border-wa-border rounded-lg text-wa-text placeholder-wa-text-tertiary focus:outline-none focus:border-wa-primary focus:ring-1 focus:ring-wa-primary transition-colors duration-200"
+                    className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#00a884] focus:ring-1 focus:ring-[#00a884] transition-colors duration-200"
                     placeholder="Create a password (min. 6 characters)"
                     value={formData.password}
                     onChange={handleChange}
                   />
                   <button
                     type="button"
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-wa-text-secondary hover:text-wa-text transition-colors duration-200"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors duration-200"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? (
@@ -218,7 +216,7 @@ const Register = () => {
               <div>
                 <label
                   htmlFor="confirmPassword"
-                  className="block text-sm font-medium text-wa-text mb-2"
+                  className="block text-sm font-medium text-gray-700 mb-2"
                 >
                   Confirm Password
                 </label>
@@ -229,14 +227,14 @@ const Register = () => {
                     type={showConfirmPassword ? "text" : "password"}
                     required
                     autoComplete="new-password"
-                    className="w-full px-4 py-3 pr-12 bg-wa-input border border-wa-border rounded-lg text-wa-text placeholder-wa-text-tertiary focus:outline-none focus:border-wa-primary focus:ring-1 focus:ring-wa-primary transition-colors duration-200"
+                    className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#00a884] focus:ring-1 focus:ring-[#00a884] transition-colors duration-200"
                     placeholder="Confirm your password"
                     value={formData.confirmPassword}
                     onChange={handleChange}
                   />
                   <button
                     type="button"
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-wa-text-secondary hover:text-wa-text transition-colors duration-200"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors duration-200"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   >
                     {showConfirmPassword ? (
@@ -282,7 +280,7 @@ const Register = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-wa-primary hover:bg-wa-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-wa-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-[#00a884] hover:bg-[#008f70] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#00a884] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
             >
               {loading ? (
                 <>
@@ -317,21 +315,21 @@ const Register = () => {
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-wa-border" />
+                <div className="w-full border-t border-gray-300" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-wa-panel text-wa-text-secondary">
+                <span className="px-2 bg-white text-gray-500">
                   Or
                 </span>
               </div>
             </div>
 
             <div className="mt-6 text-center">
-              <p className="text-wa-text-secondary text-sm">
+              <p className="text-gray-600 text-sm">
                 Already have an account?{" "}
                 <Link
                   to="/login"
-                  className="font-medium text-wa-primary hover:text-wa-primary-dark transition-colors duration-200"
+                  className="font-medium text-[#00a884] hover:text-[#008f70] transition-colors duration-200"
                 >
                   Sign in
                 </Link>
@@ -342,7 +340,7 @@ const Register = () => {
 
         {/* Footer */}
         <div className="mt-8 text-center">
-          <p className="text-wa-text-tertiary text-xs">
+          <p className="text-gray-500 text-xs">
             © 2024 WhatsApp Clone. Made with ❤️ for learning purposes.
           </p>
         </div>

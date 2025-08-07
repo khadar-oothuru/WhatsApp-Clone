@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import EmptyChatState from "./EmptyChatState";
 import { useAuth } from "../context/AuthContext";
 import { useSocket } from "../context/SocketContext";
 import { messageService } from "../services/messageService";
@@ -332,48 +333,24 @@ const ChatArea = ({ selectedUser, onlineUsers, onBackToSidebar, isMobile }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  if (!selectedUser) {
-    return (
-      <div className="flex-1 flex flex-col bg-wa-bg">
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center text-wa-text-secondary max-w-md">
-            <div className="w-64 h-64 mx-auto mb-8 opacity-20">
-              {/* WhatsApp Web Welcome Illustration */}
-              <svg viewBox="0 0 303 172" className="w-full h-full">
-                <path
-                  fill="currentColor"
-                  d="M219.04 143.36l-1.83.85c-6.27 2.92-13.14 4.89-20.6 5.55l-20.16 1.8c-11.08.99-22.5.99-33.58 0l-20.16-1.8c-7.46-.66-14.33-2.63-20.6-5.55l-1.83-.85c-17.98-8.37-30.1-26.47-30.1-46.36v-58c0-16.84 8.19-32.47 21.95-42.04L131.5 2.69c6.51-4.79 15.49-4.79 22 0l39.37 28.92C206.63 41.18 214.82 56.81 214.82 73.65v58c0 19.89-12.12 38-30.1 46.36z"
-                />
-                <circle cx="178" cy="75" r="10" fill="#fff" />
-                <circle cx="152" cy="75" r="10" fill="#fff" />
-                <circle cx="126" cy="75" r="10" fill="#fff" />
-                <path
-                  fill="#fff"
-                  d="M121 95h62c2.21 0 4 1.79 4 4s-1.79 4-4 4h-62c-2.21 0-4-1.79-4-4s1.79-4 4-4z"
-                />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-light mb-4 text-wa-text">
-              WhatsApp Clone Web
-            </h2>
-            <p className="text-wa-text-secondary mb-2">
-              Send and receive messages without keeping your phone online.
-            </p>
-            <p className="text-wa-text-secondary text-sm">
-              Use WhatsApp Clone on up to 4 linked devices and 1 phone at the
-              same time.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Calculate values needed for chat interface
+  const isOnline = selectedUser ? isUserOnline(onlineUsers, selectedUser._id) : false;
+  const groupedMessages = selectedUser ? groupMessagesByDate(messages) : [];
 
-  const isOnline = isUserOnline(onlineUsers, selectedUser._id);
-  const groupedMessages = groupMessagesByDate(messages);
-
+  // Wrap the entire return with AnimatePresence for smooth transitions
   return (
-    <div className="flex-1 flex flex-col bg-wa-bg">
+    <AnimatePresence mode="wait">
+      {!selectedUser ? (
+        <EmptyChatState key="empty-state" />
+      ) : (
+        <motion.div
+          key={`chat-${selectedUser._id}`}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -20 }}
+          transition={{ duration: 0.3, type: "spring", stiffness: 200 }}
+          className="flex-1 flex flex-col bg-wa-bg"
+        >
       {/* Chat Header */}
       <div className="bg-wa-panel border-b border-wa-border px-4 py-3">
         <div className="flex items-center justify-between">
@@ -726,7 +703,9 @@ const ChatArea = ({ selectedUser, onlineUsers, onBackToSidebar, isMobile }) => {
           )}
         </form>
       </div>
-    </div>
+    </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
 
