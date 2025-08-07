@@ -218,7 +218,7 @@
 .light-theme-button:hover {
   background-color: var(--light-accent-hover);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px var(--light-shadow);
+  box-shadow: var(--shadow-wa-hover);
 }
 
 .light-theme-button:active {
@@ -241,12 +241,13 @@
   background-color: var(--light-panel);
   border: 1px solid var(--light-border);
   border-radius: 12px;
-  box-shadow: 0 2px 8px var(--light-shadow-subtle);
+  box-shadow: var(--shadow-wa);
   transition: var(--theme-transition);
 }
 
 .light-theme-card:hover {
-  box-shadow: 0 4px 16px var(--light-shadow);
+  box-shadow: var(--shadow-wa-lg);
+  transform: translateY(-1px);
 }
 
 .light-theme-shadow {
@@ -394,6 +395,31 @@
     height: 100vh;
     height: 100dvh;
   }
+  
+  /* Adjust animations for mobile */
+  .animate-fade-in,
+  .animate-slide-up {
+    animation-duration: 0.2s;
+  }
+  
+  /* Smaller shadows on mobile */
+  :root {
+    --shadow-wa: 0 1px 1px 0 rgba(11, 20, 26, 0.2);
+    --shadow-wa-lg: 0 2px 8px 0 rgba(11, 20, 26, 0.3);
+  }
+}
+
+@media (max-width: 640px) {
+  /* Ensure full screen coverage */
+  .light-theme,
+  .light-theme-secondary {
+    min-height: 100vh;
+  }
+  
+  /* Adjust padding for mobile */
+  .light-theme-card {
+    padding: 1rem;
+  }
 }
 
 /* Focus states */
@@ -425,7 +451,8 @@
 
 /* Message bubble animations */
 .message-bubble {
-  animation: slide-up 0.2s ease-out;
+  animation: slide-up 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+  will-change: transform, opacity;
 }
 
 /* Loading spinner - WhatsApp style */
@@ -479,6 +506,8 @@
   :root {
     --wa-border: #4a5568;
     --wa-text-secondary: #a0aec0;
+    --wa-primary: #00c896;
+    --shadow-wa: 0 2px 4px 0 rgba(0, 0, 0, 0.5);
   }
 }
 
