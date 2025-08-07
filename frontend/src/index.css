@@ -1,0 +1,236 @@
+@import "tailwindcss";
+
+/* WhatsApp Web Color Variables */
+:root {
+  /* Background colors */
+  --wa-bg: #0b141a;
+  --wa-panel-header: #2a2f32;
+  --wa-panel: #111b21;
+  --wa-input-panel: #2a2f32;
+  --wa-input: #2a2f32;
+  --wa-pattern: #0a1014;
+  
+  /* Text colors */
+  --wa-text: #e9edef;
+  --wa-text-secondary: #8696a0;
+  --wa-text-tertiary: #667781;
+  
+  /* Primary colors */
+  --wa-primary: #00a884;
+  --wa-primary-dark: #008069;
+  --wa-primary-light: #00d9b5;
+  
+  /* Border colors */
+  --wa-border: #2a2f32;
+  --wa-border-light: #3b4a54;
+  
+  /* Message bubble colors */
+  --wa-bubble-outgoing: #005c4b;
+  --wa-bubble-incoming: #202c33;
+  
+  /* Status colors */
+  --wa-online: #00a884;
+  --wa-typing: #00a884;
+  --wa-unread: #00a884;
+  
+  /* Shadow colors */
+  --wa-shadow: rgba(11, 20, 26, 0.5);
+  --wa-shadow-light: rgba(11, 20, 26, 0.2);
+}
+
+/* Custom Utility Classes */
+@theme {
+  --color-wa-bg: var(--wa-bg);
+  --color-wa-panel-header: var(--wa-panel-header);
+  --color-wa-panel: var(--wa-panel);
+  --color-wa-input-panel: var(--wa-input-panel);
+  --color-wa-input: var(--wa-input);
+  --color-wa-pattern: var(--wa-pattern);
+  
+  --color-wa-text: var(--wa-text);
+  --color-wa-text-secondary: var(--wa-text-secondary);
+  --color-wa-text-tertiary: var(--wa-text-tertiary);
+  
+  --color-wa-primary: var(--wa-primary);
+  --color-wa-primary-dark: var(--wa-primary-dark);
+  --color-wa-primary-light: var(--wa-primary-light);
+  
+  --color-wa-border: var(--wa-border);
+  --color-wa-border-light: var(--wa-border-light);
+  
+  --color-wa-bubble-outgoing: var(--wa-bubble-outgoing);
+  --color-wa-bubble-incoming: var(--wa-bubble-incoming);
+  
+  --color-wa-online: var(--wa-online);
+  --color-wa-typing: var(--wa-typing);
+  --color-wa-unread: var(--wa-unread);
+  
+  --shadow-wa: 0 1px 2px 0 var(--wa-shadow);
+  --shadow-wa-lg: 0 4px 14px 0 var(--wa-shadow), 0 2px 4px 0 var(--wa-shadow-light);
+  --shadow-message: 0 1px 0.5px var(--wa-shadow-light), 0 1px 1px var(--wa-shadow);
+  
+  --font-family-sans: "Segoe UI", "Helvetica Neue", Helvetica, "Lucida Grande", Arial, "Ubuntu", "Cantarell", "Fira Sans", sans-serif;
+}
+
+/* Custom Components */
+.chat-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-scrollbar::-webkit-scrollbar-track {
+  background: var(--wa-panel);
+}
+
+.chat-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--wa-text-secondary);
+  border-radius: 3px;
+}
+
+.chat-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--wa-text);
+}
+
+/* Animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounce-gentle {
+  0%, 20%, 53%, 80%, 100% {
+    transform: translate(-50%, 0);
+  }
+  40%, 43% {
+    transform: translate(-50%, -5px);
+  }
+  70% {
+    transform: translate(-50%, -3px);
+  }
+  90% {
+    transform: translate(-50%, -2px);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.4s ease-out;
+}
+
+.animate-bounce-gentle {
+  animation: bounce-gentle 2s infinite;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .mobile-full-width {
+    width: 100vw;
+  }
+  
+  .mobile-full-height {
+    height: 100vh;
+    height: 100dvh;
+  }
+}
+
+/* Focus states */
+.focus-ring:focus-visible {
+  outline: 2px solid var(--wa-primary);
+  outline-offset: 2px;
+}
+
+/* Text selection */
+::selection {
+  background-color: var(--wa-primary);
+  color: white;
+}
+
+/* Chat background pattern */
+.chat-bg-pattern {
+  background-image: url("data:image/svg+xml,%3csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3e%3cdefs%3e%3cpattern id='chat-pattern' patternUnits='userSpaceOnUse' width='60' height='60' patternTransform='scale(0.3) rotate(0)'%3e%3crect x='0' y='0' width='100%25' height='100%25' fill='%23111b21'/%3e%3cpath d='M30 0L60 30v30H30L0 30V0h30z' fill='%23182229' fill-opacity='0.02'/%3e%3c/pattern%3e%3c/defs%3e%3crect width='100%25' height='100%25' fill='url(%23chat-pattern)'/%3e%3c/svg%3e");
+}
+
+/* Message bubble animations */
+.message-bubble {
+  animation: slide-up 0.2s ease-out;
+}
+
+/* Loading spinner */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Typing indicator */
+@keyframes typing-dots {
+  0%, 60%, 100% {
+    transform: initial;
+  }
+  30% {
+    transform: translateY(-10px);
+  }
+}
+
+.typing-dot {
+  animation: typing-dots 1.4s infinite;
+}
+
+.typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --wa-border: #4a5568;
+    --wa-text-secondary: #a0aec0;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in,
+  .animate-slide-up,
+  .animate-bounce-gentle,
+  .message-bubble {
+    animation: none;
+  }
+  
+  .animate-spin {
+    animation: none;
+  }
+}
+
+/* Dark mode compatibility (already dark by default) */
+@media (prefers-color-scheme: light) {
+  /* Keep dark theme as default for WhatsApp Web aesthetic */
+}
+
