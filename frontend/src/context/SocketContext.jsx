@@ -173,8 +173,95 @@ const SocketProvider = ({ children }) => {
     };
   }, [isConnected, connectionError]);
 
+  // ============ WhatsApp Socket Methods ============
+
+  const sendWhatsAppMessage = useCallback(
+    (phoneNumber, message, type = "text") => {
+      if (socket.current?.connected) {
+        socket.current.emit("send-whatsapp-message", {
+          phoneNumber,
+          message,
+          type,
+        });
+        return true;
+      }
+      console.warn("Socket not connected. WhatsApp message not sent.");
+      return false;
+    },
+    []
+  );
+
+  const onWhatsAppMessage = useCallback((callback) => {
+    if (socket.current) {
+      socket.current.on("whatsapp-message-received", callback);
+      return () => {
+        if (socket.current) {
+          socket.current.off("whatsapp-message-received", callback);
+        }
+      };
+    }
+    return () => {};
+  }, []);
+
+  const onWhatsAppStatusUpdate = useCallback((callback) => {
+    if (socket.current) {
+      socket.current.on("whatsapp-status-update", callback);
+      return () => {
+        if (socket.current) {
+          socket.current.off("whatsapp-status-update", callback);
+        }
+      };
+    }
+    return () => {};
+  }, []);
+
+  const onWhatsAppWebhook = useCallback((callback) => {
+    if (socket.current) {
+      socket.current.on("whatsapp-webhook-processed", callback);
+      return () => {
+        if (socket.current) {
+          socket.current.off("whatsapp-webhook-processed", callback);
+        }
+      };
+    }
+    return () => {};
+  }, []);
+
+  const subscribeToWhatsAppContact = useCallback((phoneNumber) => {
+    if (socket.current?.connected) {
+      socket.current.emit("subscribe-whatsapp-contact", { phoneNumber });
+      return true;
+    }
+    return false;
+  }, []);
+
+  const unsubscribeFromWhatsAppContact = useCallback((phoneNumber) => {
+    if (socket.current?.connected) {
+      socket.current.emit("unsubscribe-whatsapp-contact", { phoneNumber });
+      return true;
+    }
+    return false;
+  }, []);
+
+  const joinWhatsAppConversation = useCallback((conversationId) => {
+    if (socket.current?.connected) {
+      socket.current.emit("join-whatsapp-conversation", { conversationId });
+      return true;
+    }
+    return false;
+  }, []);
+
+  const leaveWhatsAppConversation = useCallback((conversationId) => {
+    if (socket.current?.connected) {
+      socket.current.emit("leave-whatsapp-conversation", { conversationId });
+      return true;
+    }
+    return false;
+  }, []);
+
   const value = useMemo(
     () => ({
+      // Regular socket methods
       sendMessage,
       startTyping,
       stopTyping,
@@ -186,6 +273,16 @@ const SocketProvider = ({ children }) => {
       getConnectionStatus,
       isConnected,
       connectionError,
+
+      // WhatsApp socket methods
+      sendWhatsAppMessage,
+      onWhatsAppMessage,
+      onWhatsAppStatusUpdate,
+      onWhatsAppWebhook,
+      subscribeToWhatsAppContact,
+      unsubscribeFromWhatsAppContact,
+      joinWhatsAppConversation,
+      leaveWhatsAppConversation,
     }),
     [
       sendMessage,
@@ -199,6 +296,14 @@ const SocketProvider = ({ children }) => {
       getConnectionStatus,
       isConnected,
       connectionError,
+      sendWhatsAppMessage,
+      onWhatsAppMessage,
+      onWhatsAppStatusUpdate,
+      onWhatsAppWebhook,
+      subscribeToWhatsAppContact,
+      unsubscribeFromWhatsAppContact,
+      joinWhatsAppConversation,
+      leaveWhatsAppConversation,
     ]
   );
 

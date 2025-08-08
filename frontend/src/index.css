@@ -9,39 +9,39 @@
   --wa-input-panel: #2a2f32;
   --wa-input: #2a2f32;
   --wa-pattern: #0a1014;
-  
+
   /* Text colors */
   --wa-text: #e9edef;
   --wa-text-secondary: #8696a0;
   --wa-text-tertiary: #667781;
-  
+
   /* Primary colors */
   --wa-primary: #00a884;
   --wa-primary-dark: #008069;
   --wa-primary-light: #00d9b5;
-  
+
   /* Border colors */
   --wa-border: #2a2f32;
   --wa-border-light: #3b4a54;
-  
+
   /* Message bubble colors */
   --wa-bubble-outgoing: #005c4b;
   --wa-bubble-incoming: #202c33;
-  
+
   /* Status colors */
   --wa-online: #00a884;
   --wa-typing: #00a884;
   --wa-unread: #00a884;
-  
+
   /* Shadow colors */
   --wa-shadow: rgba(11, 20, 26, 0.5);
   --wa-shadow-light: rgba(11, 20, 26, 0.2);
-  
+
   /* Enhanced shadows for exact WhatsApp match */
   --shadow-wa: 0 1px 2px 0 rgba(11, 20, 26, 0.3);
   --shadow-wa-lg: 0 4px 14px 0 rgba(11, 20, 26, 0.4), 0 2px 4px 0 rgba(11, 20, 26, 0.2);
   --shadow-wa-hover: 0 6px 20px 0 rgba(11, 20, 26, 0.5), 0 3px 6px 0 rgba(11, 20, 26, 0.3);
-  
+
   /* Light theme colors (for landing/auth pages) */
   --light-bg: #ffffff;
   --light-bg-secondary: #f0f2f5;
@@ -50,29 +50,29 @@
   --light-panel-header: #ffffff;
   --light-input: #f0f2f5;
   --light-input-focus: #ffffff;
-  
+
   /* Light theme text colors */
   --light-text: #111b21;
   --light-text-secondary: #667781;
   --light-text-tertiary: #8696a0;
   --light-text-muted: #aebac1;
-  
+
   /* Light theme border colors */
   --light-border: #e9edef;
   --light-border-strong: #d1d7db;
   --light-border-subtle: #f0f2f5;
-  
+
   /* Light theme shadow colors */
   --light-shadow: rgba(0, 0, 0, 0.08);
   --light-shadow-strong: rgba(0, 0, 0, 0.12);
   --light-shadow-subtle: rgba(0, 0, 0, 0.04);
-  
+
   /* Light theme accent colors */
   --light-accent: #00a884;
   --light-accent-hover: #008069;
   --light-accent-light: #d9fdd3;
   --light-accent-bg: #f0fdf4;
-  
+
   /* Transition timing */
   --theme-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -85,30 +85,30 @@
   --color-wa-input-panel: var(--wa-input-panel);
   --color-wa-input: var(--wa-input);
   --color-wa-pattern: var(--wa-pattern);
-  
+
   --color-wa-text: var(--wa-text);
   --color-wa-text-secondary: var(--wa-text-secondary);
   --color-wa-text-tertiary: var(--wa-text-tertiary);
-  
+
   --color-wa-primary: var(--wa-primary);
   --color-wa-primary-dark: var(--wa-primary-dark);
   --color-wa-primary-light: var(--wa-primary-light);
-  
+
   --color-wa-border: var(--wa-border);
   --color-wa-border-light: var(--wa-border-light);
-  
+
   --color-wa-bubble-outgoing: var(--wa-bubble-outgoing);
   --color-wa-bubble-incoming: var(--wa-bubble-incoming);
-  
+
   --color-wa-online: var(--wa-online);
   --color-wa-typing: var(--wa-typing);
   --color-wa-unread: var(--wa-unread);
-  
+
   --shadow-wa: var(--shadow-wa);
   --shadow-wa-lg: var(--shadow-wa-lg);
   --shadow-wa-hover: var(--shadow-wa-hover);
   --shadow-message: 0 1px 0.5px var(--wa-shadow-light), 0 1px 1px var(--wa-shadow);
-  
+
   --font-family-sans: "Segoe UI", "Helvetica Neue", Helvetica, "Lucida Grande", Arial, "Ubuntu", "Cantarell", "Fira Sans", sans-serif;
 }
 
@@ -326,6 +326,7 @@
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -337,6 +338,7 @@
     opacity: 0;
     transform: scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -348,6 +350,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -355,15 +358,24 @@
 }
 
 @keyframes bounce-gentle {
-  0%, 20%, 53%, 80%, 100% {
+
+  0%,
+  20%,
+  53%,
+  80%,
+  100% {
     transform: translate(-50%, 0);
   }
-  40%, 43% {
+
+  40%,
+  43% {
     transform: translate(-50%, -5px);
   }
+
   70% {
     transform: translate(-50%, -3px);
   }
+
   90% {
     transform: translate(-50%, -2px);
   }
@@ -390,18 +402,18 @@
   .mobile-full-width {
     width: 100vw;
   }
-  
+
   .mobile-full-height {
     height: 100vh;
     height: 100dvh;
   }
-  
+
   /* Adjust animations for mobile */
   .animate-fade-in,
   .animate-slide-up {
     animation-duration: 0.2s;
   }
-  
+
   /* Smaller shadows on mobile */
   :root {
     --shadow-wa: 0 1px 1px 0 rgba(11, 20, 26, 0.2);
@@ -410,12 +422,13 @@
 }
 
 @media (max-width: 640px) {
+
   /* Ensure full screen coverage */
   .light-theme,
   .light-theme-secondary {
     min-height: 100vh;
   }
-  
+
   /* Adjust padding for mobile */
   .light-theme-card {
     padding: 1rem;
@@ -466,6 +479,7 @@
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }
@@ -481,9 +495,13 @@
 
 /* Typing indicator */
 @keyframes typing-dots {
-  0%, 60%, 100% {
+
+  0%,
+  60%,
+  100% {
     transform: initial;
   }
+
   30% {
     transform: translateY(-10px);
   }
@@ -513,13 +531,14 @@
 
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
+
   .animate-fade-in,
   .animate-slide-up,
   .animate-bounce-gentle,
   .message-bubble {
     animation: none;
   }
-  
+
   .animate-spin {
     animation: none;
   }
@@ -556,6 +575,7 @@
     opacity: 0;
     transform: scale(0.98);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -628,3 +648,89 @@
   border: 1px solid #bee5eb;
 }
 
+/* Message Layout and Text Wrapping Fixes */
+.message-bubble {
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+.message-bubble .word-wrap {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  -webkit-hyphens: auto;
+  hyphens: auto;
+}
+
+.overflow-wrap-anywhere {
+  overflow-wrap: anywhere;
+}
+
+/* Chat Container Layout Fixes */
+.chat-container {
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-messages-container {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Responsive message bubble widths */
+@media (max-width: 640px) {
+  .message-bubble {
+    max-width: 90% !important;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 768px) {
+  .message-bubble {
+    max-width: 85% !important;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .message-bubble {
+    max-width: 75% !important;
+  }
+}
+
+@media (min-width: 1025px) {
+  .message-bubble {
+    max-width: 65% !important;
+  }
+}
+
+/* Ensure proper flex behavior for message containers */
+.message-container {
+  display: flex;
+  width: 100%;
+  align-items: flex-end;
+  margin-bottom: 4px;
+}
+
+.message-container.outgoing {
+  justify-content: flex-end;
+}
+
+.message-container.incoming {
+  justify-content: flex-start;
+}
+
+/* Fix for long URLs and links */
+.message-content a {
+  word-break: break-all;
+  overflow-wrap: break-word;
+}
+
+/* Selection mode improvements */
+.selection-checkbox {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+}

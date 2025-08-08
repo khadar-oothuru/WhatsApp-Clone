@@ -68,16 +68,26 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    console.log("AuthContext: Checking token on mount:", token);
-    if (token) {
-      // Verify token validity here if needed
-      dispatch({
-        type: "AUTH_SUCCESS",
-        payload: {
-          token,
-          user: JSON.parse(localStorage.getItem("user") || "{}"),
-        },
-      });
+    const userStr = localStorage.getItem("user");
+
+    if (token && userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        if (user && user._id) {
+          dispatch({
+            type: "AUTH_SUCCESS",
+            payload: {
+              token,
+              user,
+            },
+          });
+        } else {
+          dispatch({ type: "LOGOUT" });
+        }
+      } catch (error) {
+        console.error("AuthContext: Error parsing user data:", error);
+        dispatch({ type: "LOGOUT" });
+      }
     } else {
       dispatch({ type: "LOGOUT" });
     }
