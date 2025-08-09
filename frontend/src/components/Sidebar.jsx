@@ -6,6 +6,7 @@ import { userService } from "../services/userService";
 import { apiService } from "../services/apiService";
 import { useDebouncedAPI } from "../utils/debounce";
 import LeftNavigation from "./Sidebar/LeftNavigation";
+import Avatar from "./Avatar";
 import SidebarHeader from "./Sidebar/SidebarHeader";
 import SidebarSearchBar from "./Sidebar/SidebarSearchBar";
 import SidebarFilterTabs from "./Sidebar/SidebarFilterTabs_new";
@@ -710,6 +711,7 @@ const Sidebar = ({
           setActiveTab={setActiveTab}
           setShowProfile={setShowProfile}
           setShowWhatsAppSettings={setShowWhatsAppSettings}
+          user={user}
         />
       </div>
 
@@ -941,21 +943,26 @@ const Sidebar = ({
                 </button>
               </div>
 
-              {/* Profile Section */}
-              <div className="mt-8 pt-6 border-t border-wa-border">
+              {/* Profile at bottom - bigger avatar, like LeftNavigation */}
+              <div className="absolute bottom-0 left-0 w-full flex flex-col items-center pb-6 pt-6 border-t border-wa-border bg-wa-panel z-10">
                 <button
                   onClick={() => {
                     setShowProfile(true);
                     setShowMobileMenu(false);
                   }}
-                  className="w-full flex items-center space-x-3 p-3 rounded-lg text-wa-text-secondary hover:text-wa-text hover:bg-wa-active transition-colors mobile-nav-button"
+                  className="p-1 rounded-full hover:bg-wa-active transition-all duration-200 group relative flex items-center justify-center"
+                  title="Profile"
                 >
-                  <div className="w-8 h-8 bg-wa-text-tertiary rounded-full flex items-center justify-center">
-                    <span className="text-sm text-wa-text font-medium">
-                      {user?.username?.[0]?.toUpperCase() || "U"}
-                    </span>
+                  <Avatar
+                    src={user?.profilePicture}
+                    alt={user?.username || "User"}
+                    username={user?.username}
+                    size="lg"
+                  />
+                  {/* Tooltip */}
+                  <div className="absolute left-full ml-3 px-2 py-1 bg-wa-text text-wa-bg text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-10 transition-opacity duration-200 shadow-lg">
+                    Profile
                   </div>
-                  <span>Profile</span>
                 </button>
               </div>
             </div>

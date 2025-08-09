@@ -3,12 +3,14 @@ import React from "react";
 import { HiChat, HiStatusOnline, HiCog, HiMenu } from "react-icons/hi";
 import { FaWhatsapp } from "react-icons/fa";
 import PropTypes from "prop-types";
+import Avatar from "../Avatar";
 
 const LeftNavigation = ({
   activeTab,
   setActiveTab,
   setShowProfile,
   setShowWhatsAppSettings,
+  user,
 }) => {
   const navItems = [
     { id: "chats", icon: HiChat, label: "Chats" },
@@ -56,16 +58,20 @@ const LeftNavigation = ({
         })}
       </div>
 
-      {/* Profile at bottom */}
-      <div className="mt-auto">
+      {/* Profile at bottom - bigger avatar */}
+      <div className="mt-auto mb-2">
         <button
           onClick={() => setShowProfile(true)}
-          className="p-3 rounded-lg text-wa-text-secondary hover:text-wa-text hover:bg-wa-active transition-all duration-200 group relative"
+          className="p-1 rounded-full hover:bg-wa-active transition-all duration-200 group relative flex items-center justify-center"
           title="Profile"
         >
-          <div className="w-5 h-5 bg-wa-text-tertiary rounded-full flex items-center justify-center overflow-hidden">
-            <span className="text-xs text-wa-text font-medium">U</span>
-          </div>
+          <Avatar
+            src={user?.profilePicture}
+            alt={user?.username || "User"}
+            username={user?.username}
+            size="lg"
+            className="shadow"
+          />
           {/* Tooltip */}
           <div className="absolute left-full ml-3 px-2 py-1 bg-wa-text text-wa-bg text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-10 transition-opacity duration-200 shadow-lg">
             Profile
@@ -81,6 +87,7 @@ LeftNavigation.propTypes = {
   setActiveTab: PropTypes.func.isRequired,
   setShowProfile: PropTypes.func.isRequired,
   setShowWhatsAppSettings: PropTypes.func.isRequired,
+  user: PropTypes.object,
 };
 
 export default LeftNavigation;

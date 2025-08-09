@@ -154,7 +154,10 @@ const SidebarProfile = ({
   };
 
   return (
-    <div className="w-full md:w-80 bg-wa-bg flex flex-col h-full">
+    <div
+      className="main-sidebar-content bg-wa-bg flex flex-col h-full"
+      style={{ minWidth: 0 }}
+    >
       {/* Profile Header */}
       <div className="bg-wa-panel-header p-4 text-wa-text flex items-center justify-between border-b border-wa-border">
         <div className="flex items-center">
@@ -169,28 +172,31 @@ const SidebarProfile = ({
         {!isEditing ? (
           <button
             onClick={() => setIsEditing(true)}
-            className="p-2 hover:bg-wa-active rounded-full transition-colors"
+            className="p-2 group hover:bg-wa-primary/10 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-wa-primary"
             title="Edit Profile"
+            aria-label="Edit Profile"
           >
-            <FaEdit />
+            <FaEdit className="w-5 h-5 text-wa-text-secondary group-hover:text-wa-primary transition-colors" />
           </button>
         ) : (
           <div className="flex space-x-2">
             <button
               onClick={handleSave}
               disabled={isLoading}
-              className="p-2 hover:bg-wa-active rounded-full transition-colors text-green-500"
+              className="p-2 group rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-400 bg-green-50 hover:bg-green-100 border border-green-200"
               title="Save Changes"
+              aria-label="Save Changes"
             >
-              <FaCheck />
+              <FaCheck className="w-5 h-5 text-green-600 group-hover:text-green-700 transition-colors" />
             </button>
             <button
               onClick={handleCancel}
               disabled={isLoading}
-              className="p-2 hover:bg-wa-active rounded-full transition-colors text-red-500"
+              className="p-2 group rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 bg-red-50 hover:bg-red-100 border border-red-200"
               title="Cancel"
+              aria-label="Cancel"
             >
-              <FaTimes />
+              <FaTimes className="w-5 h-5 text-red-600 group-hover:text-red-700 transition-colors" />
             </button>
           </div>
         )}
@@ -216,10 +222,11 @@ const SidebarProfile = ({
             {isEditing && (
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="absolute bottom-0 right-0 bg-wa-primary text-white p-2 rounded-full hover:bg-wa-primary-dark transition-colors"
+                className="absolute bottom-0 right-0 bg-wa-primary text-white p-2 rounded-full shadow-lg hover:bg-wa-primary-dark transition-colors focus:outline-none focus:ring-2 focus:ring-wa-primary"
                 title="Change Profile Picture"
+                aria-label="Change Profile Picture"
               >
-                <FaCamera className="w-3 h-3" />
+                <FaCamera className="w-4 h-4" />
               </button>
             )}
             <input
