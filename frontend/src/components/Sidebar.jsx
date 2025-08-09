@@ -36,6 +36,28 @@ const Sidebar = ({
   const [activeTab, setActiveTab] = useState("chats");
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
+  // Handle escape key to close mobile menu
+  useEffect(() => {
+    const handleEscapeKey = (e) => {
+      if (e.key === "Escape" && showMobileMenu) {
+        setShowMobileMenu(false);
+      }
+    };
+
+    if (showMobileMenu) {
+      document.addEventListener("keydown", handleEscapeKey);
+      // Prevent body scrolling when menu is open
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleEscapeKey);
+      document.body.style.overflow = "";
+    };
+  }, [showMobileMenu]);
+
   // WhatsApp-specific state
   const [showWhatsAppSettings, setShowWhatsAppSettings] = useState(false);
   const [showPhoneSearch, setShowPhoneSearch] = useState(false);
@@ -758,26 +780,173 @@ const Sidebar = ({
       {/* Mobile Navigation Overlay */}
       {showMobileMenu && (
         <div className="fixed inset-0 z-50 md:hidden">
+          {/* Backdrop */}
           <div
-            className="absolute inset-0 bg-black bg-opacity-50"
+            className="absolute inset-0 bg-black bg-opacity-50 transition-opacity duration-300 animate-fade-in"
             onClick={() => setShowMobileMenu(false)}
           ></div>
-          <div className="absolute left-0 top-0 h-full bg-wa-panel shadow-lg">
-            <LeftNavigation
-              activeTab={activeTab}
-              setActiveTab={(tab) => {
-                setActiveTab(tab);
-                setShowMobileMenu(false);
-              }}
-              setShowProfile={(show) => {
-                setShowProfile(show);
-                setShowMobileMenu(false);
-              }}
-              setShowWhatsAppSettings={(show) => {
-                setShowWhatsAppSettings(show);
-                setShowMobileMenu(false);
-              }}
-            />
+          {/* Slide-in Navigation Panel */}
+          <div className="absolute left-0 top-0 h-full w-64 bg-wa-panel shadow-2xl transform transition-transform duration-300 ease-out animate-slide-in-left">
+            {/* Close button */}
+            <div className="flex justify-end p-4 border-b border-wa-border">
+              <button
+                onClick={() => setShowMobileMenu(false)}
+                className="p-2 text-wa-text-secondary hover:text-wa-text hover:bg-wa-active rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-wa-primary focus:ring-opacity-50"
+                aria-label="Close navigation menu"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            {/* Mobile Navigation Content */}
+            <div className="p-4">
+              <h2 className="text-lg font-semibold text-wa-text mb-6">
+                Navigation
+              </h2>
+
+              {/* Navigation Items */}
+              <div className="space-y-3">
+                <button
+                  onClick={() => {
+                    setActiveTab("chats");
+                    setShowMobileMenu(false);
+                  }}
+                  className={`w-full flex items-center space-x-3 p-3 rounded-lg transition-colors mobile-nav-button ${
+                    activeTab === "chats"
+                      ? "bg-wa-primary text-white"
+                      : "text-wa-text-secondary hover:text-wa-text hover:bg-wa-active"
+                  }`}
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                    />
+                  </svg>
+                  <span>Chats</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setActiveTab("status");
+                    setShowMobileMenu(false);
+                  }}
+                  className={`w-full flex items-center space-x-3 p-3 rounded-lg transition-colors mobile-nav-button ${
+                    activeTab === "status"
+                      ? "bg-wa-primary text-white"
+                      : "text-wa-text-secondary hover:text-wa-text hover:bg-wa-active"
+                  }`}
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 10V3L4 14h7v7l9-11h-7z"
+                    />
+                  </svg>
+                  <span>Status</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setActiveTab("menu");
+                    setShowMobileMenu(false);
+                  }}
+                  className={`w-full flex items-center space-x-3 p-3 rounded-lg transition-colors mobile-nav-button ${
+                    activeTab === "menu"
+                      ? "bg-wa-primary text-white"
+                      : "text-wa-text-secondary hover:text-wa-text hover:bg-wa-active"
+                  }`}
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 6h16M4 12h16M4 18h16"
+                    />
+                  </svg>
+                  <span>Menu</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setShowWhatsAppSettings(true);
+                    setShowMobileMenu(false);
+                  }}
+                  className="w-full flex items-center space-x-3 p-3 rounded-lg text-wa-text-secondary hover:text-wa-text hover:bg-wa-active transition-colors mobile-nav-button"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                  </svg>
+                  <span>Settings</span>
+                </button>
+              </div>
+
+              {/* Profile Section */}
+              <div className="mt-8 pt-6 border-t border-wa-border">
+                <button
+                  onClick={() => {
+                    setShowProfile(true);
+                    setShowMobileMenu(false);
+                  }}
+                  className="w-full flex items-center space-x-3 p-3 rounded-lg text-wa-text-secondary hover:text-wa-text hover:bg-wa-active transition-colors mobile-nav-button"
+                >
+                  <div className="w-8 h-8 bg-wa-text-tertiary rounded-full flex items-center justify-center">
+                    <span className="text-sm text-wa-text font-medium">
+                      {user?.username?.[0]?.toUpperCase() || "U"}
+                    </span>
+                  </div>
+                  <span>Profile</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

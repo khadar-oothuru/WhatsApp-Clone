@@ -6,12 +6,13 @@ import PropTypes from "prop-types";
 const SidebarHeader = ({ archived, starred, onMobileMenuClick }) => (
   <div className="bg-wa-panel-header border-b border-wa-border">
     <div className="px-4 py-4 flex items-center justify-between">
-      {/* Mobile menu button */}
+      {/* Mobile menu button - More prominent styling */}
       <button
         onClick={onMobileMenuClick}
-        className="md:hidden p-2 text-wa-text-secondary hover:text-wa-text hover:bg-wa-active rounded-lg transition-colors"
+        className="md:hidden p-2 text-wa-text-secondary hover:text-wa-text hover:bg-wa-active rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-wa-primary focus:ring-opacity-50"
+        aria-label="Open navigation menu"
       >
-        <HiMenu className="w-5 h-5" />
+        <HiMenu className="w-6 h-6" />
       </button>
 
       <h1 className="text-xl font-medium text-wa-text">
@@ -19,7 +20,7 @@ const SidebarHeader = ({ archived, starred, onMobileMenuClick }) => (
       </h1>
 
       {/* Spacer for mobile to center title */}
-      <div className="md:hidden w-9"></div>
+      <div className="md:hidden w-10"></div>
     </div>
   </div>
 );
