@@ -3,9 +3,9 @@ import PropTypes from "prop-types";
 import { useAuth } from "../context/AuthContext";
 import { messageService } from "../services/messageService";
 import { userService } from "../services/userService";
-import { apiService } from "../services/apiService";
 import { useDebouncedAPI } from "../utils/debounce";
 import LeftNavigation from "./Sidebar/LeftNavigation";
+import SidebarSettingsWrapper from "./Sidebar/SidebarSettingsWrapper";
 import Avatar from "./Avatar";
 import SidebarHeader from "./Sidebar/SidebarHeader";
 import SidebarSearchBar from "./Sidebar/SidebarSearchBar";
@@ -61,6 +61,7 @@ const Sidebar = ({
 
   // WhatsApp-specific state
   const [showWhatsAppSettings, setShowWhatsAppSettings] = useState(false);
+  const [showSettingsPanel, setShowSettingsPanel] = useState(false);
   const [showPhoneSearch, setShowPhoneSearch] = useState(false);
   const [phoneSearchQuery, setPhoneSearchQuery] = useState("");
   const [isWhatsAppLinked, setIsWhatsAppLinked] = useState(false);
@@ -114,7 +115,7 @@ const Sidebar = ({
 
     try {
       console.log("[Sidebar] Fetching conversations for user:", user._id);
-      const result = await apiService.messages.getConversations();
+      const result = await messageService.getConversations();
       console.log("[Sidebar] Conversations fetch result:", result);
 
       if (Array.isArray(result)) {
@@ -151,7 +152,7 @@ const Sidebar = ({
 
     try {
       console.log("[Sidebar] Fetching users for user:", user._id);
-      const result = await apiService.users.getAllUsers();
+      const result = await userService.getUsers();
       console.log("[Sidebar] Users fetch result:", result);
 
       if (Array.isArray(result)) {
@@ -193,6 +194,44 @@ const Sidebar = ({
       fetchUsers();
     }
   }, [isAuthenticated, user?._id, authLoading, fetchConversations, fetchUsers]);
+
+  // Handle conversation updates (pin, archive, mute, etc.)
+  const handleConversationUpdate = useCallback(
+    async (chat, action) => {
+      try {
+        // Update the conversation in the local state based on the action
+        setConversations((prevConversations) =>
+          prevConversations.map((conv) => {
+            if (conv.user._id === chat.user._id) {
+              switch (action) {
+                case "pin":
+                  return { ...conv, isPinned: !conv.isPinned };
+                case "archive":
+                  return { ...conv, isArchived: true };
+                case "mute":
+                  return { ...conv, isMuted: !conv.isMuted };
+                case "markRead":
+                  return { ...conv, unreadCount: 0 };
+                default:
+                  return conv;
+              }
+            }
+            return conv;
+          })
+        );
+
+        // If archived, refetch conversations to update the list
+        if (action === "archive") {
+          await refetchConversations();
+        }
+
+        console.log(`Conversation ${action} updated successfully`);
+      } catch (error) {
+        console.error(`Error updating conversation after ${action}:`, error);
+      }
+    },
+    [refetchConversations]
+  );
 
   // Create stable search API function
   const searchUsersAPI = useCallback((query) => {
@@ -702,6 +741,10 @@ const Sidebar = ({
     );
   }
 
+  if (showSettingsPanel) {
+    return <SidebarSettingsWrapper user={user} logout={handleLogout} />;
+  }
+
   return (
     <div className="whatsapp-sidebar">
       {/* Left Navigation - Always visible on desktop */}
@@ -711,6 +754,7 @@ const Sidebar = ({
           setActiveTab={setActiveTab}
           setShowProfile={setShowProfile}
           setShowWhatsAppSettings={setShowWhatsAppSettings}
+          setShowSettingsPanel={setShowSettingsPanel}
           user={user}
         />
       </div>
@@ -785,6 +829,7 @@ const Sidebar = ({
                 filteredItems={filteredItems}
                 selectedUser={selectedUser}
                 handleUserSelect={handleUserSelect}
+                onConversationUpdate={handleConversationUpdate}
               />
             )}
           </div>
@@ -978,6 +1023,7 @@ const Sidebar = ({
         setShowPhoneSearch={setShowPhoneSearch}
       />
       {/* WhatsApp Settings Modal */}
+      {/* WhatsApp Settings Modal (now only shown from Menu icon) */}
       <WhatsAppSettingsModal
         show={showWhatsAppSettings}
         isWhatsAppLinked={isWhatsAppLinked}

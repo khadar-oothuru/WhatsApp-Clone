@@ -207,20 +207,51 @@ const ChatArea = ({
           sender: {
             _id: messageData.senderId || selectedUser._id,
             username: messageData.senderUsername || selectedUser.username,
+            profilePicture: selectedUser.profilePicture,
           },
           recipient: {
             _id: user._id,
             username: user.username,
+            profilePicture: user.profilePicture,
           },
           content: messageData.message || messageData.content,
           createdAt: messageData.timestamp || new Date().toISOString(),
           status: "delivered",
-          type: "text",
+          type: messageData.type || "text",
+          isWhatsApp: messageData.isWhatsApp || false,
+          whatsapp_message_id: messageData.whatsapp_message_id,
+          from_phone: messageData.from_phone,
+          to_phone: messageData.to_phone,
         };
-        setMessages((prev) => [...prev, newMessage]);
+
+        setMessages((prev) => {
+          // Check if message already exists to avoid duplicates
+          const exists = prev.some(
+            (msg) =>
+              msg._id === newMessage._id ||
+              (msg.whatsapp_message_id &&
+                msg.whatsapp_message_id === newMessage.whatsapp_message_id)
+          );
+
+          if (exists) return prev;
+
+          return [...prev, newMessage];
+        });
+
+        // Auto-scroll to bottom for new messages
+        setTimeout(scrollToBottom, 100);
+
+        // Mark message as read automatically after a short delay
+        setTimeout(async () => {
+          try {
+            await messageService.markMessagesAsRead(selectedUser._id);
+          } catch (error) {
+            console.warn("Failed to mark message as read:", error);
+          }
+        }, 1000);
       }
     },
-    [selectedUser, user._id, user.username]
+    [selectedUser, user._id, user.username, user.profilePicture]
   );
 
   const handleUserTyping = useCallback(
@@ -479,11 +510,13 @@ const ChatArea = ({
       sender: {
         _id: user._id,
         username: user.username,
+        profilePicture: user.profilePicture,
         phone_number: user.phone_number,
       },
       recipient: {
         _id: selectedUser._id,
         username: selectedUser.username,
+        profilePicture: selectedUser.profilePicture,
       },
       content: messageText,
       createdAt: new Date().toISOString(),
@@ -525,26 +558,52 @@ const ChatArea = ({
         prev.map((msg) =>
           msg._id === tempMessageId
             ? {
-                ...msg, // Keep the original temp message structure
-                _id: savedMessage._id || msg._id, // Use saved ID if available
+                ...savedMessage,
+                _id: savedMessage._id || msg._id,
                 status: "sent",
                 createdAt: savedMessage.createdAt || msg.createdAt,
-                // Ensure sender structure remains correct
                 sender: {
                   _id: user._id,
                   username: user.username,
+                  profilePicture: user.profilePicture,
                   phone_number: user.phone_number,
+                },
+                recipient: {
+                  _id: selectedUser._id,
+                  username: selectedUser.username,
+                  profilePicture: selectedUser.profilePicture,
                 },
               }
             : msg
         )
       );
+
+      // Stop typing indicator
+      if (stopTyping) {
+        stopTyping(selectedUser._id);
+      }
+
+      // Scroll to bottom
+      scrollToBottom();
+
+      // Mark messages as read
+      try {
+        await messageService.markMessagesAsRead(selectedUser._id);
+      } catch (readError) {
+        console.warn("Failed to mark messages as read:", readError);
+      }
     } catch (error) {
       console.error("Error sending message:", error);
       // Update message status to failed
       setMessages((prev) =>
         prev.map((msg) =>
-          msg._id === tempMessageId ? { ...msg, status: "failed" } : msg
+          msg._id === tempMessageId
+            ? {
+                ...msg,
+                status: "failed",
+                error: error.message,
+              }
+            : msg
         )
       );
     }
@@ -622,21 +681,107 @@ const ChatArea = ({
       console.log("Message deleted successfully");
     } catch (error) {
       console.error("Error deleting message:", error);
-      // Revert the optimistic update
+      // Revert optimistic update
       setMessages(originalMessages);
-      // Show error notification (you can implement toast notifications)
-      alert("Failed to delete message. Please try again.");
     }
   };
 
   const handleCopyMessage = (message) => {
-    navigator.clipboard.writeText(message.content);
-    // TODO: Show toast notification
+    try {
+      navigator.clipboard.writeText(message.content);
+      console.log("Message copied to clipboard");
+      // You could show a toast notification here
+    } catch (error) {
+      console.error("Failed to copy message:", error);
+      // Fallback for older browsers
+      const textArea = document.createElement("textarea");
+      textArea.value = message.content;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textArea);
+    }
   };
 
   const handleReplyToMessage = (message) => {
     setReplyToMessage(message);
     inputRef.current?.focus();
+  };
+
+  const handleForwardMessage = (message) => {
+    // TODO: Open forward modal with contact list
+    console.log("Forward message:", message);
+  };
+
+  const handleStarMessage = async (messageId) => {
+    try {
+      const message = messages.find((msg) => msg._id === messageId);
+      if (!message) return;
+
+      const isStarred = message.isStarred || false;
+
+      // Optimistically update UI
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg._id === messageId ? { ...msg, isStarred: !isStarred } : msg
+        )
+      );
+
+      // Call API
+      await messageService.starMessage(messageId, !isStarred);
+
+      console.log(
+        `Message ${isStarred ? "unstarred" : "starred"} successfully`
+      );
+    } catch (error) {
+      console.error("Error starring message:", error);
+      // Revert optimistic update
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg._id === messageId ? { ...msg, isStarred: !msg.isStarred } : msg
+        )
+      );
+    }
+  };
+
+  const handleEditMessage = async (messageId, newContent) => {
+    try {
+      const originalMessage = messages.find((msg) => msg._id === messageId);
+      if (!originalMessage) return;
+
+      // Optimistically update UI
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg._id === messageId
+            ? {
+                ...msg,
+                content: newContent,
+                edited: true,
+                editedAt: new Date(),
+              }
+            : msg
+        )
+      );
+
+      // Call API
+      await messageService.editMessage(messageId, newContent);
+
+      console.log("Message edited successfully");
+    } catch (error) {
+      console.error("Error editing message:", error);
+
+      // Find the original message again for reverting
+      const originalMessage = messages.find((msg) => msg._id === messageId);
+      if (originalMessage) {
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg._id === messageId
+              ? { ...originalMessage, content: originalMessage.content }
+              : msg
+          )
+        );
+      }
+    }
   };
 
   const cancelReply = () => {

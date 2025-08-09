@@ -10,6 +10,7 @@ const LeftNavigation = ({
   setActiveTab,
   setShowProfile,
   setShowWhatsAppSettings,
+  setShowSettingsPanel,
   user,
 }) => {
   const navItems = [
@@ -38,6 +39,8 @@ const LeftNavigation = ({
               onClick={() => {
                 setActiveTab(id);
                 if (id === "settings") {
+                  setShowSettingsPanel(true);
+                } else if (id === "menu") {
                   setShowWhatsAppSettings(true);
                 }
               }}
@@ -87,6 +90,7 @@ LeftNavigation.propTypes = {
   setActiveTab: PropTypes.func.isRequired,
   setShowProfile: PropTypes.func.isRequired,
   setShowWhatsAppSettings: PropTypes.func.isRequired,
+  setShowSettingsPanel: PropTypes.func.isRequired,
   user: PropTypes.object,
 };
 

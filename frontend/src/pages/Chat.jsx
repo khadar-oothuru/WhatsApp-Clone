@@ -8,12 +8,33 @@ import { useAPI } from "../hooks/useAPI";
 import { useAppNavigation } from "../hooks/useNavigation";
 import Sidebar from "../components/Sidebar";
 import ChatArea from "../components/ChatArea";
+import WhatsAppLoadingScreen from "../components/WhatsAppLoadingScreen";
 
 const Chat = ({ archived = false, starred = false, isSearchMode = false }) => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [isMobile, setIsMobile] = useState(false);
   const [isMedium, setIsMedium] = useState(false);
+  // Loading UI state
+  const [loadingPercent, setLoadingPercent] = useState(0);
+  const [showLoadingScreen, setShowLoadingScreen] = useState(true);
+  // Simulate loading progress for demo (replace with real logic as needed)
+  useEffect(() => {
+    if (!showLoadingScreen) return;
+    let percent = 0;
+    const interval = setInterval(() => {
+      percent += Math.floor(Math.random() * 8) + 4; // random step
+      if (percent >= 100) {
+        percent = 100;
+        setLoadingPercent(percent);
+        clearInterval(interval);
+        setTimeout(() => setShowLoadingScreen(false), 400); // fade out
+      } else {
+        setLoadingPercent(percent);
+      }
+    }, 300);
+    return () => clearInterval(interval);
+  }, [showLoadingScreen]);
   const { onUsersOnline, removeListener } = useSocket();
   const { user, isAuthenticated } = useAuth();
   const { userId, groupId } = useParams();
@@ -123,15 +144,9 @@ const Chat = ({ archived = false, starred = false, isSearchMode = false }) => {
   }, []);
 
   // FIXED: Better error handling and loading states
-  if (!isAuthenticated || !user) {
-    return (
-      <div className="h-screen bg-wa-bg flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-2 border-wa-primary border-t-transparent mx-auto mb-4"></div>
-          <p className="text-wa-text-secondary">Loading...</p>
-        </div>
-      </div>
-    );
+  // Show WhatsApp-style loading screen until loaded
+  if (showLoadingScreen || !isAuthenticated || !user) {
+    return <WhatsAppLoadingScreen percent={loadingPercent} />;
   }
 
   // Show error state if there's an error loading user
@@ -219,34 +234,7 @@ const Chat = ({ archived = false, starred = false, isSearchMode = false }) => {
         </div>
       )}
 
-      {/* FIXED: Better connection status handling */}
-      {user && user._id && !onlineUsers.includes(user._id) && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-black px-4 py-2 rounded-lg shadow-wa-lg text-sm animate-bounce-gentle z-50 backdrop-blur-sm">
-          <div className="flex items-center space-x-2">
-            <svg
-              className="animate-spin h-4 w-4"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              ></circle>
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              ></path>
-            </svg>
-            <span className="font-medium">Connecting to WhatsApp...</span>
-          </div>
-        </div>
-      )}
+      {/* Removed yellow connection pop-up. Loading handled by overlay. */}
     </div>
   );
 };

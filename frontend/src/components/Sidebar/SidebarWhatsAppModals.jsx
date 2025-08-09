@@ -14,8 +14,10 @@ export const WhatsAppPhoneSearchModal = ({
   if (!show) return null;
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-        <h3 className="text-lg font-semibold mb-4">Search by Phone Number</h3>
+      <div className="bg-wa-panel rounded-lg p-6 w-full max-w-md mx-4 shadow-2xl">
+        <h3 className="text-lg font-semibold mb-4 text-wa-text">
+          Search by Phone Number
+        </h3>
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -23,7 +25,7 @@ export const WhatsAppPhoneSearchModal = ({
           }}
         >
           <div className="mb-4">
-            <label className="block text-sm font-medium mb-2">
+            <label className="block text-sm font-medium mb-2 text-wa-text">
               Phone Number (with country code)
             </label>
             <input
@@ -31,10 +33,10 @@ export const WhatsAppPhoneSearchModal = ({
               value={phoneSearchQuery}
               onChange={(e) => setPhoneSearchQuery(e.target.value)}
               placeholder="+1234567890"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full px-3 py-2 bg-wa-input-panel border border-wa-border rounded-md focus:outline-none focus:ring-2 focus:ring-wa-primary text-wa-text placeholder-wa-text-secondary"
               required
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-wa-text-secondary mt-1">
               Include country code (e.g., +1 for US, +91 for India)
             </p>
           </div>
@@ -45,13 +47,13 @@ export const WhatsAppPhoneSearchModal = ({
                 setShowPhoneSearch(false);
                 setPhoneSearchQuery("");
               }}
-              className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md"
+              className="px-4 py-2 text-wa-text-secondary hover:bg-wa-input-panel rounded-md transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
+              className="px-4 py-2 bg-wa-primary text-white rounded-md hover:bg-wa-primary/90 transition-colors"
             >
               Search
             </button>
@@ -84,18 +86,20 @@ export const WhatsAppSettingsModal = ({
   if (!show) return null;
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-lg mx-4">
-        <h3 className="text-lg font-semibold mb-4">WhatsApp Integration</h3>
+      <div className="bg-wa-panel rounded-lg p-6 w-full max-w-lg mx-4 shadow-2xl">
+        <h3 className="text-lg font-semibold mb-4 text-wa-text">
+          WhatsApp Integration
+        </h3>
         {isWhatsAppLinked ? (
           <div>
-            <div className="flex items-center mb-4 p-4 bg-green-50 rounded-lg">
-              <FaWhatsapp className="w-8 h-8 text-green-500 mr-3" />
+            <div className="flex items-center mb-4 p-4 bg-wa-primary/10 border border-wa-primary/20 rounded-lg">
+              <FaWhatsapp className="w-8 h-8 text-wa-primary mr-3" />
               <div>
-                <h4 className="font-medium text-green-800">
+                <h4 className="font-medium text-wa-primary">
                   WhatsApp Account Linked
                 </h4>
                 {whatsappProfile && (
-                  <div className="text-sm text-green-600">
+                  <div className="text-sm text-wa-text-secondary">
                     <p>Phone: +{whatsappProfile.phone_number}</p>
                     {whatsappProfile.whatsapp_name && (
                       <p>Name: {whatsappProfile.whatsapp_name}</p>
@@ -110,25 +114,39 @@ export const WhatsAppSettingsModal = ({
               </div>
             </div>
             <div className="mb-6">
-              <h5 className="font-medium mb-2">Features Available:</h5>
-              <ul className="text-sm text-gray-600 space-y-1">
-                <li>✅ Send WhatsApp messages</li>
-                <li>✅ Receive message status updates</li>
-                <li>✅ Use WhatsApp templates</li>
-                <li>✅ Phone number search</li>
+              <h5 className="font-medium mb-2 text-wa-text">
+                Features Available:
+              </h5>
+              <ul className="text-sm text-wa-text-secondary space-y-1">
+                <li className="flex items-center">
+                  <span className="text-wa-primary mr-2">✓</span>
+                  Send WhatsApp messages
+                </li>
+                <li className="flex items-center">
+                  <span className="text-wa-primary mr-2">✓</span>
+                  Receive message status updates
+                </li>
+                <li className="flex items-center">
+                  <span className="text-wa-primary mr-2">✓</span>
+                  Use WhatsApp templates
+                </li>
+                <li className="flex items-center">
+                  <span className="text-wa-primary mr-2">✓</span>
+                  Phone number search
+                </li>
               </ul>
             </div>
             <div className="flex justify-between">
               <button
                 onClick={handleUnlinkWhatsApp}
-                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 flex items-center"
+                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 flex items-center transition-colors"
               >
                 <FaUnlink className="w-4 h-4 mr-2" />
                 Unlink Account
               </button>
               <button
                 onClick={() => setShowWhatsAppSettings(false)}
-                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md"
+                className="px-4 py-2 text-wa-text-secondary hover:bg-wa-input-panel rounded-md transition-colors"
               >
                 Close
               </button>
@@ -137,11 +155,11 @@ export const WhatsAppSettingsModal = ({
         ) : (
           <div>
             <div className="text-center mb-6">
-              <FaWhatsapp className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h4 className="text-lg font-medium mb-2">
+              <FaWhatsapp className="w-16 h-16 text-wa-text-secondary mx-auto mb-4" />
+              <h4 className="text-lg font-medium mb-2 text-wa-text">
                 Link Your WhatsApp Account
               </h4>
-              <p className="text-gray-600 text-sm">
+              <p className="text-wa-text-secondary text-sm">
                 Connect your WhatsApp Business account to send and receive
                 messages directly from this chat app.
               </p>
@@ -161,48 +179,48 @@ export const WhatsAppSettingsModal = ({
             >
               <div className="space-y-4 mb-6">
                 <div>
-                  <label className="block text-sm font-medium mb-1">
+                  <label className="block text-sm font-medium mb-1 text-wa-text">
                     WhatsApp ID
                   </label>
                   <input
                     name="wa_id"
                     type="text"
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 bg-wa-input-panel border border-wa-border rounded-md focus:outline-none focus:ring-2 focus:ring-wa-primary text-wa-text placeholder-wa-text-secondary"
                     placeholder="Your WhatsApp ID"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">
+                  <label className="block text-sm font-medium mb-1 text-wa-text">
                     Phone Number
                   </label>
                   <input
                     name="phone_number"
                     type="tel"
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 bg-wa-input-panel border border-wa-border rounded-md focus:outline-none focus:ring-2 focus:ring-wa-primary text-wa-text placeholder-wa-text-secondary"
                     placeholder="+1234567890"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">
+                  <label className="block text-sm font-medium mb-1 text-wa-text">
                     Phone Number ID
                   </label>
                   <input
                     name="phone_number_id"
                     type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 bg-wa-input-panel border border-wa-border rounded-md focus:outline-none focus:ring-2 focus:ring-wa-primary text-wa-text placeholder-wa-text-secondary"
                     placeholder="WhatsApp Business Phone Number ID"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">
+                  <label className="block text-sm font-medium mb-1 text-wa-text">
                     Display Name
                   </label>
                   <input
                     name="whatsapp_name"
                     type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 bg-wa-input-panel border border-wa-border rounded-md focus:outline-none focus:ring-2 focus:ring-wa-primary text-wa-text placeholder-wa-text-secondary"
                     placeholder="Your display name on WhatsApp"
                   />
                 </div>
@@ -211,13 +229,13 @@ export const WhatsAppSettingsModal = ({
                 <button
                   type="button"
                   onClick={() => setShowWhatsAppSettings(false)}
-                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md"
+                  className="px-4 py-2 text-wa-text-secondary hover:bg-wa-input-panel rounded-md transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 flex items-center"
+                  className="px-4 py-2 bg-wa-primary text-white rounded-md hover:bg-wa-primary/90 flex items-center transition-colors"
                 >
                   <FaLink className="w-4 h-4 mr-2" />
                   Link Account
