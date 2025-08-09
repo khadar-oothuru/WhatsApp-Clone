@@ -116,7 +116,6 @@ const conversationSchema = new mongoose.Schema(
 conversationSchema.index({ participants: 1 });
 conversationSchema.index({ lastMessageAt: -1 });
 conversationSchema.index({ participants: 1, lastMessageAt: -1 });
-conversationSchema.index({ whatsapp_conversation_id: 1 });
 conversationSchema.index({ phone_number_id: 1 });
 
 // Method to get conversation between two users

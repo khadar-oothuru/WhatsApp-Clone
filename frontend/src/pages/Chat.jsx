@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import PropTypes from "prop-types";
 import { useParams } from "react-router-dom";
@@ -14,6 +13,7 @@ const Chat = ({ archived = false, starred = false, isSearchMode = false }) => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [isMobile, setIsMobile] = useState(false);
+  const [isMedium, setIsMedium] = useState(false);
   const { onUsersOnline, removeListener } = useSocket();
   const { user, isAuthenticated } = useAuth();
   const { userId, groupId } = useParams();
@@ -53,16 +53,18 @@ const Chat = ({ archived = false, starred = false, isSearchMode = false }) => {
     document.title = title;
   }, [archived, starred, isSearchMode, selectedUser?.username, routeInfo.type]);
 
-  // Check if mobile screen
+  // Check if mobile or medium screen
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+    const checkScreenSize = () => {
+      const width = window.innerWidth;
+      setIsMobile(width < 768);
+      setIsMedium(width >= 768 && width < 1024);
     };
 
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
+    checkScreenSize();
+    window.addEventListener("resize", checkScreenSize);
 
-    return () => window.removeEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
   // Listen for online users updates
@@ -163,8 +165,8 @@ const Chat = ({ archived = false, starred = false, isSearchMode = false }) => {
 
   return (
     <div className="h-screen bg-wa-bg flex overflow-hidden chat-container">
-      {/* Mobile Layout */}
-      {isMobile ? (
+      {/* Mobile and Medium (Tablet) Layout - Show only one panel at a time */}
+      {isMobile || isMedium ? (
         <div className="w-full h-full flex flex-col mobile-full-height">
           {!selectedUser ? (
             <div className="flex-1 animate-slide-up">
@@ -185,16 +187,16 @@ const Chat = ({ archived = false, starred = false, isSearchMode = false }) => {
                 selectedUser={selectedUser}
                 onlineUsers={onlineUsers}
                 onBackToSidebar={handleBackToSidebar}
-                isMobile={isMobile}
+                isMobile={isMobile || isMedium}
               />
             </div>
           )}
         </div>
       ) : (
-        /* Desktop Layout */
+        /* Desktop Layout - Show both panels side by side */
         <div className="flex w-full h-full bg-wa-panel-header overflow-hidden">
           {/* Left Sidebar */}
-          <div className="w-96 min-w-[24rem] max-w-[30rem] border-r border-wa-border flex-shrink-0 bg-wa-panel animate-fade-in">
+          <div className="w-[28rem] min-w-[28rem] max-w-[36rem] border-r border-wa-border flex-shrink-0 bg-wa-panel animate-fade-in">
             <Sidebar
               onSelectUser={handleSelectUser}
               selectedUser={selectedUser}
@@ -211,7 +213,7 @@ const Chat = ({ archived = false, starred = false, isSearchMode = false }) => {
             <ChatArea
               selectedUser={selectedUser}
               onlineUsers={onlineUsers}
-              isMobile={isMobile}
+              isMobile={false}
             />
           </div>
         </div>

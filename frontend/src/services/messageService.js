@@ -126,11 +126,12 @@ export const messageService = {
   },
 
   // Search messages (enhanced)
-  async searchMessages(query) {
+  async searchMessages(query, userId = null) {
     try {
-      const response = await api.get(
-        `/messages/search/${encodeURIComponent(query)}`
-      );
+      const params = new URLSearchParams({ query });
+      if (userId) params.append("userId", userId);
+
+      const response = await api.get(`/messages/search?${params.toString()}`);
       return response.data;
     } catch (error) {
       console.error("MessageService: Search messages error:", error);
@@ -155,20 +156,6 @@ export const messageService = {
     } catch (error) {
       console.error("MessageService: Upload media error:", error);
       throw new Error(error.response?.data?.error || "Failed to upload media");
-    }
-  },
-  async searchMessages(query, userId = null) {
-    try {
-      const params = new URLSearchParams({ query });
-      if (userId) params.append("userId", userId);
-
-      const response = await api.get(`/messages/search?${params.toString()}`);
-      return response.data;
-    } catch (error) {
-      console.error("MessageService: Search messages error:", error);
-      throw new Error(
-        error.response?.data?.error || "Failed to search messages"
-      );
     }
   },
 

@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
+import clsx from "clsx";
 import EmptyChatState from "./EmptyChatState";
 import { useAuth } from "../context/AuthContext";
 import { useSocket } from "../context/SocketContext";
@@ -66,6 +67,10 @@ const ChatArea = ({
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [replyToMessage, setReplyToMessage] = useState(null);
   const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [currentSearchIndex, setCurrentSearchIndex] = useState(-1);
+  const [searchLoading, setSearchLoading] = useState(false);
 
   // WhatsApp-specific state
   const [isWhatsAppMode, setIsWhatsAppMode] = useState(false);
@@ -107,17 +112,36 @@ const ChatArea = ({
   }, [selectedUser]);
 
   // Fetch messages using the API hook
-  const { data: fetchedMessages, loading } = useAPI(
-    getMessagesAPI,
-    selectedUser ? [selectedUser._id] : []
-  );
+  const {
+    data: fetchedMessages,
+    loading,
+    error,
+  } = useAPI(getMessagesAPI, selectedUser ? [selectedUser._id] : []);
 
   // Update messages when fetchedMessages changes
   useEffect(() => {
     if (fetchedMessages) {
       setMessages(fetchedMessages);
+      console.log("Fetched messages:", fetchedMessages);
+    } else if (selectedUser) {
+      // fallback: fetch messages directly if hook fails
+      messageService
+        .getMessages(selectedUser._id)
+        .then((msgs) => {
+          setMessages(msgs);
+          console.log("Fallback direct fetch messages:", msgs);
+        })
+        .catch((err) => {
+          console.error("Error fetching messages directly:", err);
+        });
     }
-  }, [fetchedMessages]);
+  }, [fetchedMessages, selectedUser]);
+
+  useEffect(() => {
+    if (error) {
+      console.error("Error in useAPI for messages:", error);
+    }
+  }, [error]);
 
   // Memoized grouped messages
   const groupedMessages = useMemo(() => {
@@ -128,15 +152,50 @@ const ChatArea = ({
   useHotkeys("ctrl+k", (e) => {
     e.preventDefault();
     setShowSearch(!showSearch);
+    if (!showSearch) {
+      // Focus search input when opening
+      setTimeout(() => {
+        const searchInput = document.querySelector(".search-input");
+        if (searchInput) searchInput.focus();
+      }, 100);
+    }
+  });
+
+  useHotkeys("ctrl+f", (e) => {
+    e.preventDefault();
+    setShowSearch(!showSearch);
+    if (!showSearch) {
+      setTimeout(() => {
+        const searchInput = document.querySelector(".search-input");
+        if (searchInput) searchInput.focus();
+      }, 100);
+    }
   });
 
   useHotkeys("escape", () => {
-    setShowEmojiPicker(false);
-    setShowAttachmentMenu(false);
-    setIsSelectionMode(false);
-    setSelectedMessages([]);
-    setReplyToMessage(null);
-    setShowSearch(false);
+    if (showSearch) {
+      clearSearch();
+    } else {
+      setShowEmojiPicker(false);
+      setShowAttachmentMenu(false);
+      setIsSelectionMode(false);
+      setSelectedMessages([]);
+      setReplyToMessage(null);
+    }
+  });
+
+  useHotkeys("f3", (e) => {
+    e.preventDefault();
+    if (searchResults.length > 0) {
+      navigateSearchResults("next");
+    }
+  });
+
+  useHotkeys("shift+f3", (e) => {
+    e.preventDefault();
+    if (searchResults.length > 0) {
+      navigateSearchResults("prev");
+    }
   });
 
   // Define callback handlers
@@ -144,20 +203,24 @@ const ChatArea = ({
     (messageData) => {
       if (messageData.senderId === selectedUser?._id) {
         const newMessage = {
-          _id: Date.now().toString(),
+          _id: messageData.messageId || Date.now().toString(),
           sender: {
-            _id: messageData.senderId,
-            username: selectedUser.username,
+            _id: messageData.senderId || selectedUser._id,
+            username: messageData.senderUsername || selectedUser.username,
           },
-          recipient: { _id: user._id },
-          content: messageData.message,
-          createdAt: messageData.timestamp,
+          recipient: {
+            _id: user._id,
+            username: user.username,
+          },
+          content: messageData.message || messageData.content,
+          createdAt: messageData.timestamp || new Date().toISOString(),
           status: "delivered",
+          type: "text",
         };
         setMessages((prev) => [...prev, newMessage]);
       }
     },
-    [selectedUser, user._id]
+    [selectedUser, user._id, user.username]
   );
 
   const handleUserTyping = useCallback(
@@ -409,32 +472,70 @@ const ChatArea = ({
       return;
     }
 
-    // Regular message handling
+    // Create temporary message with proper structure
+    const tempMessageId = `temp_${Date.now()}`;
     const tempMessage = {
-      _id: Date.now().toString(),
-      sender: { _id: user._id, username: user.username },
-      recipient: { _id: selectedUser._id },
+      _id: tempMessageId,
+      sender: {
+        _id: user._id,
+        username: user.username,
+        phone_number: user.phone_number,
+      },
+      recipient: {
+        _id: selectedUser._id,
+        username: selectedUser.username,
+      },
       content: messageText,
-      createdAt: new Date(),
+      createdAt: new Date().toISOString(),
       status: "sending",
+      type: "text",
+      isWhatsApp: false,
+      replyTo: replyToMessage ? replyToMessage._id : null,
     };
+
+    // Add temp message to UI immediately
     setMessages((prev) => [...prev, tempMessage]);
 
-    try {
-      // Send via socket for real-time
-      sendMessage(selectedUser._id, messageText);
+    // Clear reply if exists
+    if (replyToMessage) {
+      setReplyToMessage(null);
+    }
 
-      // Also send via API for persistence
-      const savedMessage = await messageService.sendMessage({
+    try {
+      // Send via socket for real-time updates
+      if (sendMessage) {
+        sendMessage(selectedUser._id, messageText, replyToMessage?._id);
+      }
+
+      // Send via API for persistence
+      const messagePayload = {
         recipientId: selectedUser._id,
         content: messageText,
-      });
+        type: "text",
+      };
 
-      // Update the temp message with saved message data
+      if (replyToMessage) {
+        messagePayload.replyToMessageId = replyToMessage._id;
+      }
+
+      const savedMessage = await messageService.sendMessage(messagePayload);
+
+      // Update the temp message with actual saved message data
       setMessages((prev) =>
         prev.map((msg) =>
-          msg._id === tempMessage._id
-            ? { ...savedMessage, status: "sent" }
+          msg._id === tempMessageId
+            ? {
+                ...msg, // Keep the original temp message structure
+                _id: savedMessage._id || msg._id, // Use saved ID if available
+                status: "sent",
+                createdAt: savedMessage.createdAt || msg.createdAt,
+                // Ensure sender structure remains correct
+                sender: {
+                  _id: user._id,
+                  username: user.username,
+                  phone_number: user.phone_number,
+                },
+              }
             : msg
         )
       );
@@ -443,7 +544,7 @@ const ChatArea = ({
       // Update message status to failed
       setMessages((prev) =>
         prev.map((msg) =>
-          msg._id === tempMessage._id ? { ...msg, status: "failed" } : msg
+          msg._id === tempMessageId ? { ...msg, status: "failed" } : msg
         )
       );
     }
@@ -501,11 +602,30 @@ const ChatArea = ({
   };
 
   const handleDeleteMessage = async (messageId) => {
+    const originalMessages = [...messages];
     try {
+      // Optimistically remove from UI
       setMessages((prev) => prev.filter((msg) => msg._id !== messageId));
-      // TODO: Call API to delete message
+
+      // Call API to delete message
+      await messageService.deleteMessage(messageId);
+
+      // If we're in selection mode and this was a selected message, remove from selection
+      if (selectedMessages.includes(messageId)) {
+        const newSelection = selectedMessages.filter((id) => id !== messageId);
+        setSelectedMessages(newSelection);
+        if (newSelection.length === 0) {
+          setIsSelectionMode(false);
+        }
+      }
+
+      console.log("Message deleted successfully");
     } catch (error) {
       console.error("Error deleting message:", error);
+      // Revert the optimistic update
+      setMessages(originalMessages);
+      // Show error notification (you can implement toast notifications)
+      alert("Failed to delete message. Please try again.");
     }
   };
 
@@ -540,12 +660,125 @@ const ChatArea = ({
     });
   };
 
-  const deleteSelectedMessages = () => {
-    setMessages((prev) =>
-      prev.filter((msg) => !selectedMessages.includes(msg._id))
+  const deleteSelectedMessages = async () => {
+    if (selectedMessages.length === 0) return;
+
+    const originalMessages = [...messages];
+    const messagesToDelete = [...selectedMessages];
+
+    try {
+      // Optimistically remove from UI
+      setMessages((prev) =>
+        prev.filter((msg) => !selectedMessages.includes(msg._id))
+      );
+      setSelectedMessages([]);
+      setIsSelectionMode(false);
+
+      // Delete all selected messages via API
+      await Promise.all(
+        messagesToDelete.map((messageId) =>
+          messageService.deleteMessage(messageId)
+        )
+      );
+
+      console.log(`Successfully deleted ${messagesToDelete.length} messages`);
+    } catch (error) {
+      console.error("Error deleting selected messages:", error);
+      // Revert the optimistic update
+      setMessages(originalMessages);
+      setSelectedMessages(messagesToDelete);
+      setIsSelectionMode(true);
+      alert("Failed to delete some messages. Please try again.");
+    }
+  };
+
+  // Search functionality
+  const handleSearch = async (query) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      setCurrentSearchIndex(-1);
+      return;
+    }
+
+    setSearchLoading(true);
+    try {
+      // Search in current messages first (client-side)
+      const localResults = messages.filter((msg) =>
+        msg.content.toLowerCase().includes(query.toLowerCase())
+      );
+
+      // Also search via API for more comprehensive results
+      const apiResults = await messageService.searchMessages(
+        query,
+        selectedUser._id
+      );
+
+      // Combine and deduplicate results
+      const allResults = [...localResults];
+      apiResults.forEach((apiMsg) => {
+        if (!allResults.find((msg) => msg._id === apiMsg._id)) {
+          allResults.push(apiMsg);
+        }
+      });
+
+      setSearchResults(allResults);
+      setCurrentSearchIndex(allResults.length > 0 ? 0 : -1);
+
+      // Scroll to first result if found
+      if (allResults.length > 0) {
+        scrollToMessage(allResults[0]._id);
+      }
+    } catch (error) {
+      console.error("Error searching messages:", error);
+      // Fallback to local search only
+      const localResults = messages.filter((msg) =>
+        msg.content.toLowerCase().includes(query.toLowerCase())
+      );
+      setSearchResults(localResults);
+      setCurrentSearchIndex(localResults.length > 0 ? 0 : -1);
+    }
+    setSearchLoading(false);
+  };
+
+  const navigateSearchResults = (direction) => {
+    if (searchResults.length === 0) return;
+
+    let newIndex;
+    if (direction === "next") {
+      newIndex =
+        currentSearchIndex < searchResults.length - 1
+          ? currentSearchIndex + 1
+          : 0;
+    } else {
+      newIndex =
+        currentSearchIndex > 0
+          ? currentSearchIndex - 1
+          : searchResults.length - 1;
+    }
+
+    setCurrentSearchIndex(newIndex);
+    scrollToMessage(searchResults[newIndex]._id);
+  };
+
+  const scrollToMessage = (messageId) => {
+    const messageElement = document.querySelector(
+      `[data-message-id="${messageId}"]`
     );
-    setSelectedMessages([]);
-    setIsSelectionMode(false);
+    if (messageElement) {
+      messageElement.scrollIntoView({ behavior: "smooth", block: "center" });
+      // Briefly highlight the message
+      messageElement.classList.add("bg-yellow-200");
+      setTimeout(() => {
+        messageElement.classList.remove("bg-yellow-200");
+      }, 2000);
+    }
+  };
+
+  const clearSearch = () => {
+    setSearchQuery("");
+    setSearchResults([]);
+    setCurrentSearchIndex(-1);
+    setShowSearch(false);
   };
 
   // Click outside handlers
@@ -586,7 +819,11 @@ const ChatArea = ({
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -20 }}
           transition={{ duration: 0.3, type: "spring", stiffness: 200 }}
-          className="flex-1 flex flex-col bg-wa-bg h-full overflow-hidden"
+          className={clsx(
+            "flex-1 flex flex-col bg-wa-bg overflow-hidden",
+            isMobile ? "h-full" : "h-full",
+            "chat-messages-container"
+          )}
         >
           {/* Chat Header */}
           <div className="bg-wa-panel border-b border-wa-border px-4 py-3">
@@ -652,7 +889,16 @@ const ChatArea = ({
               </div>
 
               <div className="flex items-center space-x-2">
-                <button className="p-2 text-wa-text-secondary hover:bg-wa-input-panel rounded-full transition-colors">
+                <button
+                  onClick={() => setShowSearch(!showSearch)}
+                  className={clsx(
+                    "p-2 rounded-full transition-colors",
+                    showSearch
+                      ? "bg-wa-primary text-white"
+                      : "text-wa-text-secondary hover:bg-wa-input-panel"
+                  )}
+                  title="Search in chat (Ctrl+F)"
+                >
                   <FaSearch className="w-5 h-5" />
                 </button>
                 <button className="p-2 text-wa-text-secondary hover:bg-wa-input-panel rounded-full transition-colors">
@@ -669,7 +915,12 @@ const ChatArea = ({
           </div>
 
           {/* Messages Area */}
-          <div className="flex-1 flex flex-col min-h-0 relative">
+          <div
+            className={clsx(
+              "flex-1 flex flex-col relative",
+              isMobile ? "min-h-0 h-full" : "min-h-0"
+            )}
+          >
             {/* Selection Mode Header */}
             <AnimatePresence>
               {isSelectionMode && (
@@ -711,10 +962,81 @@ const ChatArea = ({
               )}
             </AnimatePresence>
 
+            {/* Search Bar */}
+            <AnimatePresence>
+              {showSearch && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="bg-wa-panel border-b border-wa-border px-4 py-3 flex items-center space-x-3 flex-shrink-0"
+                >
+                  <div className="flex-1 relative">
+                    <input
+                      type="text"
+                      placeholder="Search messages..."
+                      value={searchQuery}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        if (e.target.value.trim()) {
+                          handleSearch(e.target.value);
+                        } else {
+                          setSearchResults([]);
+                          setCurrentSearchIndex(-1);
+                        }
+                      }}
+                      className="search-input w-full bg-wa-input-panel border border-wa-border rounded-lg px-4 py-2 text-wa-text placeholder-wa-text-secondary focus:outline-none focus:border-wa-primary"
+                      autoFocus
+                    />
+                    {searchLoading && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-wa-primary border-t-transparent"></div>
+                      </div>
+                    )}
+                  </div>
+
+                  {searchResults.length > 0 && (
+                    <div className="flex items-center space-x-2 text-wa-text-secondary text-sm">
+                      <span>
+                        {currentSearchIndex + 1} of {searchResults.length}
+                      </span>
+                      <div className="flex space-x-1">
+                        <button
+                          onClick={() => navigateSearchResults("prev")}
+                          className="p-1 hover:bg-wa-input-panel rounded transition-colors"
+                          disabled={searchResults.length === 0}
+                        >
+                          <FaArrowLeft className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={() => navigateSearchResults("next")}
+                          className="p-1 hover:bg-wa-input-panel rounded transition-colors"
+                          disabled={searchResults.length === 0}
+                        >
+                          <FaArrowLeft className="w-3 h-3 rotate-180" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={clearSearch}
+                    className="p-2 text-wa-text-secondary hover:bg-wa-input-panel rounded-full transition-colors"
+                  >
+                    <FaTimes className="w-4 h-4" />
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {/* Scrollable Messages Container */}
             <div
               ref={messagesContainerRef}
-              className="flex-1 overflow-y-auto overflow-x-hidden bg-wa-pattern chat-scrollbar chat-bg-pattern"
+              className={clsx(
+                "flex-1 overflow-y-auto overflow-x-hidden bg-wa-pattern chat-scrollbar chat-bg-pattern",
+                "px-2 sm:px-4 md:px-6",
+                isMobile && "h-full max-h-full"
+              )}
               style={{ minHeight: 0 }}
             >
               {loading ? (
@@ -736,7 +1058,7 @@ const ChatArea = ({
                   </div>
                 </div>
               ) : (
-                <div className="p-4 pb-2 min-w-0">
+                <div className="py-4 pb-2 min-w-0">
                   {groupedMessages.map((group, groupIndex) => (
                     <div key={groupIndex} className="mb-4">
                       {/* Date separator */}
@@ -748,7 +1070,34 @@ const ChatArea = ({
 
                       {/* Messages for this date */}
                       {group.messages.map((message, index) => {
-                        const isCurrentUser = message.sender._id === user._id;
+                        // Ensure we have valid IDs for comparison - handle different data structures
+                        const senderId =
+                          message.sender?._id ||
+                          message.sender?.id ||
+                          message.senderId ||
+                          message.sender;
+                        const currentUserId = user?._id || user?.id;
+
+                        // More robust comparison - handle string vs ObjectId
+                        const isCurrentUser =
+                          String(senderId) === String(currentUserId);
+
+                        // Debug logging - FOR DEBUGGING ONLY
+                        console.log("Message debug:", {
+                          messageId: message._id,
+                          senderId: senderId,
+                          senderType: typeof senderId,
+                          currentUserId: currentUserId,
+                          currentUserType: typeof currentUserId,
+                          stringComparison:
+                            String(senderId) === String(currentUserId),
+                          directComparison: senderId === currentUserId,
+                          isCurrentUser: isCurrentUser,
+                          content: message.content?.substring(0, 20) + "...",
+                          userObject: user,
+                          senderObject: message.sender,
+                        });
+
                         const prevMessage =
                           index > 0 ? group.messages[index - 1] : null;
                         const nextMessage =
@@ -758,10 +1107,12 @@ const ChatArea = ({
 
                         const isFirstInGroup =
                           !prevMessage ||
-                          prevMessage.sender._id !== message.sender._id;
+                          (prevMessage.sender?._id || prevMessage.senderId) !==
+                            senderId;
                         const isLastInGroup =
                           !nextMessage ||
-                          nextMessage.sender._id !== message.sender._id;
+                          (nextMessage.sender?._id || nextMessage.senderId) !==
+                            senderId;
 
                         return (
                           <Message
@@ -844,7 +1195,12 @@ const ChatArea = ({
           </AnimatePresence>
 
           {/* Message Input */}
-          <div className="bg-wa-panel px-4 py-3 border-t border-wa-border relative">
+          <div
+            className={clsx(
+              "bg-wa-panel border-t border-wa-border relative flex-shrink-0",
+              "px-2 sm:px-4 py-3"
+            )}
+          >
             {/* Emoji Picker */}
             <AnimatePresence>
               {showEmojiPicker && (
@@ -853,12 +1209,12 @@ const ChatArea = ({
                   initial={{ opacity: 0, scale: 0.95, y: 20 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                  className="absolute bottom-20 right-4 z-50 shadow-wa-lg rounded-lg overflow-hidden"
+                  className="absolute bottom-20 right-2 sm:right-4 z-50 shadow-wa-lg rounded-lg overflow-hidden"
                 >
                   <EmojiPicker
                     onEmojiClick={handleEmojiClick}
                     theme="dark"
-                    width={350}
+                    width={Math.min(350, window.innerWidth - 40)}
                     height={400}
                     searchDisabled={false}
                     skinTonesDisabled={false}
@@ -936,7 +1292,7 @@ const ChatArea = ({
 
             <form
               onSubmit={handleSendMessage}
-              className="flex items-end space-x-3"
+              className="flex items-end space-x-2 sm:space-x-3"
             >
               {/* Attachment button */}
               <div className="relative">

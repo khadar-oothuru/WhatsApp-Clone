@@ -95,34 +95,31 @@ const Message = ({
 
   const getBubblePosition = () => {
     if (isCurrentUser) {
-      if (isFirstInGroup && isLastInGroup) return "rounded-lg";
-      if (isFirstInGroup) return "rounded-lg rounded-br-md";
-      if (isLastInGroup) return "rounded-lg rounded-tr-md";
-      return "rounded-lg rounded-r-md";
+      if (isFirstInGroup && isLastInGroup) return "rounded-2xl";
+      if (isFirstInGroup) return "rounded-2xl rounded-br-lg";
+      if (isLastInGroup) return "rounded-2xl rounded-tr-lg";
+      return "rounded-2xl rounded-r-lg";
     } else {
-      if (isFirstInGroup && isLastInGroup) return "rounded-lg";
-      if (isFirstInGroup) return "rounded-lg rounded-bl-md";
-      if (isLastInGroup) return "rounded-lg rounded-tl-md";
-      return "rounded-lg rounded-l-md";
+      if (isFirstInGroup && isLastInGroup) return "rounded-2xl";
+      if (isFirstInGroup) return "rounded-2xl rounded-bl-lg";
+      if (isLastInGroup) return "rounded-2xl rounded-tl-lg";
+      return "rounded-2xl rounded-l-lg";
     }
   };
 
   return (
     <div
       className={clsx(
-        "message-container group relative w-full",
-        isCurrentUser ? "outgoing" : "incoming"
+        "message-container group relative w-full flex mb-2",
+        isCurrentUser ? "justify-end" : "justify-start"
       )}
     >
-      {/* Selection checkbox */}
-      {selectionMode && (
+      {/* Selection checkbox for incoming messages */}
+      {selectionMode && !isCurrentUser && (
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
-          className={clsx(
-            "selection-checkbox flex items-center mr-2 flex-shrink-0",
-            isCurrentUser ? "order-2" : "order-1"
-          )}
+          className="selection-checkbox flex items-center mr-2 flex-shrink-0"
         >
           <div
             onClick={handleMessageClick}
@@ -149,22 +146,22 @@ const Message = ({
       {/* Message bubble */}
       <motion.div
         ref={messageRef}
+        data-message-id={message._id}
         className={clsx(
-          "message-bubble relative px-3 py-2 shadow-message cursor-pointer transition-all duration-200",
-          "flex-shrink min-w-0",
+          "message-bubble relative px-3 py-2 shadow-sm cursor-pointer transition-all duration-200",
+          "max-w-[280px] sm:max-w-sm md:max-w-md lg:max-w-lg break-words",
           getBubblePosition(),
           isCurrentUser
-            ? "bg-wa-bubble-outgoing text-white hover:bg-opacity-90"
-            : "bg-wa-bubble-incoming text-wa-text border border-wa-border hover:bg-opacity-80",
-          isSelected && "ring-2 ring-wa-primary ring-opacity-50",
-          selectionMode ? "order-1" : ""
+            ? "bg-[#005c4b] text-white hover:bg-[#004a3d] ml-auto"
+            : "bg-white text-gray-800 border border-gray-200 hover:bg-gray-50 mr-auto",
+          isSelected && "ring-2 ring-blue-500 ring-opacity-50"
         )}
         onClick={handleMessageClick}
         onContextMenu={handleContextMenu}
         onMouseEnter={() => setShowQuickActions(true)}
         onMouseLeave={() => setShowQuickActions(false)}
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
+        whileHover={{ scale: 1.01 }}
+        whileTap={{ scale: 0.99 }}
       >
         {/* Message content */}
         <div className="message-content text-sm leading-relaxed word-wrap">
@@ -367,6 +364,35 @@ const Message = ({
           )}
         </AnimatePresence>
       </motion.div>
+
+      {/* Selection checkbox for outgoing messages */}
+      {selectionMode && isCurrentUser && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="selection-checkbox flex items-center ml-2 flex-shrink-0"
+        >
+          <div
+            onClick={handleMessageClick}
+            className={clsx(
+              "w-5 h-5 rounded-full border-2 cursor-pointer transition-all duration-200",
+              isSelected
+                ? "bg-wa-primary border-wa-primary"
+                : "border-wa-text-secondary hover:border-wa-primary"
+            )}
+          >
+            {isSelected && (
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="w-full h-full flex items-center justify-center"
+              >
+                <FaCheck className="w-3 h-3 text-white" />
+              </motion.div>
+            )}
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 };

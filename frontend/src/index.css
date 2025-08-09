@@ -433,6 +433,28 @@
   .light-theme-card {
     padding: 1rem;
   }
+
+  /* Fix chat area height and scrolling on mobile */
+  .mobile-full-height {
+    height: 100vh !important;
+    height: 100dvh !important;
+    max-height: 100vh !important;
+    max-height: 100dvh !important;
+    overflow: hidden !important;
+  }
+
+  .animate-slide-up {
+    height: 100% !important;
+    max-height: 100% !important;
+    overflow: hidden !important;
+  }
+
+  /* Ensure chat messages container takes full available height */
+  .chat-messages-container {
+    height: 100% !important;
+    max-height: 100% !important;
+    overflow: hidden !important;
+  }
 }
 
 /* Focus states */
@@ -733,4 +755,60 @@
   flex-shrink: 0;
   width: 20px;
   height: 20px;
+}
+
+/* Medium screen (tablet) specific improvements */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .chat-container {
+    height: 100vh !important;
+    overflow: hidden !important;
+  }
+
+  .mobile-full-height {
+    height: 100vh !important;
+    max-height: 100vh !important;
+  }
+
+  .chat-messages-container {
+    height: 100% !important;
+    overflow: hidden !important;
+  }
+
+  /* Ensure better spacing for medium screens */
+  .chat-scrollbar {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  /* Adjust sidebar width for better readability on tablets */
+  .whatsapp-sidebar {
+    max-width: 100% !important;
+  }
+
+  /* Better message bubble sizing for tablets */
+  .message-bubble {
+    max-width: 75% !important;
+    min-width: 120px !important;
+  }
+
+  /* Better input area for tablets */
+  .wa-input-panel textarea {
+    font-size: 16px !important;
+    /* Prevent zoom on iOS Safari */
+  }
+
+  /* Ensure proper flex behavior and scrolling for chat area */
+  .animate-slide-up {
+    height: 100% !important;
+    overflow: hidden !important;
+  }
+
+  /* Fix chat area height on medium screens */
+  .chat-messages-container {
+    height: 100vh !important;
+    height: 100dvh !important;
+    max-height: 100vh !important;
+    max-height: 100dvh !important;
+    overflow: hidden !important;
+  }
 }

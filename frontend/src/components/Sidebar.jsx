@@ -1,29 +1,22 @@
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 import PropTypes from "prop-types";
-import {
-  FaSearch,
-  FaUser,
-  FaUsers,
-  FaArrowLeft,
-  FaThumbtack,
-  FaWhatsapp,
-  FaPhone,
-  FaPlus,
-  FaCog,
-  FaLink,
-  FaUnlink,
-} from "react-icons/fa";
-import { MdChatBubble } from "react-icons/md";
-import { BsThreeDotsVertical } from "react-icons/bs";
-import Avatar from "./Avatar";
-import { formatLastSeen, truncateText } from "../utils/helpers";
-import clsx from "clsx";
 import { useAuth } from "../context/AuthContext";
 import { messageService } from "../services/messageService";
 import { userService } from "../services/userService";
-import { whatsappService } from "../services/whatsappService";
-import { useAPI } from "../hooks/useAPI";
+import { apiService } from "../services/apiService";
 import { useDebouncedAPI } from "../utils/debounce";
+import LeftNavigation from "./Sidebar/LeftNavigation";
+import SidebarHeader from "./Sidebar/SidebarHeader";
+import SidebarSearchBar from "./Sidebar/SidebarSearchBar";
+import SidebarFilterTabs from "./Sidebar/SidebarFilterTabs_new";
+import SidebarProfile from "./Sidebar/SidebarProfile";
+import SidebarEmptyState from "./Sidebar/SidebarEmptyState";
+import SidebarChatList from "./Sidebar/SidebarChatList";
+import {
+  WhatsAppPhoneSearchModal,
+  WhatsAppSettingsModal,
+} from "./Sidebar/SidebarWhatsAppModals";
+import "./Sidebar/sidebar-styles.css";
 
 const Sidebar = ({
   onSelectUser,
@@ -40,6 +33,8 @@ const Sidebar = ({
     return "all";
   });
   const [showProfile, setShowProfile] = useState(false);
+  const [activeTab, setActiveTab] = useState("chats");
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   // WhatsApp-specific state
   const [showWhatsAppSettings, setShowWhatsAppSettings] = useState(false);
@@ -68,38 +63,107 @@ const Sidebar = ({
     }
   }, [archived, starred, activeFilter]);
 
-  // Create stable API call functions
-  const getConversationsAPI = useCallback(() => {
-    return messageService.getConversations();
-  }, []);
+  // Direct state management for better control
+  const [conversations, setConversations] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [conversationsLoading, setConversationsLoading] = useState(false);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [conversationsError, setConversationsError] = useState(null);
+  const [usersError, setUsersError] = useState(null);
 
-  const getUsersAPI = useCallback(() => {
-    return userService.getUsers();
-  }, []);
+  // Fetch conversations function
+  const fetchConversations = useCallback(async () => {
+    if (!isAuthenticated || !user?._id) {
+      console.log(
+        "[Sidebar] fetchConversations: Not authenticated or no user ID"
+      );
+      return;
+    }
 
-  // Fetch conversations with stable dependencies
-  const {
-    data: conversations,
-    loading: conversationsLoading,
-    error: conversationsError,
-    refetch: refetchConversations,
-  } = useAPI(getConversationsAPI, [user?._id], {
-    immediate: Boolean(isAuthenticated && user?._id),
-    enableLogging: false,
-    debounceMs: 100,
-  });
+    setConversationsLoading(true);
+    setConversationsError(null);
 
-  // Fetch all users as fallback with stable dependencies
-  const {
-    data: users,
-    loading: usersLoading,
-    error: usersError,
-    refetch: refetchUsers,
-  } = useAPI(getUsersAPI, [user?._id], {
-    immediate: Boolean(isAuthenticated && user?._id),
-    enableLogging: false,
-    debounceMs: 100,
-  });
+    try {
+      console.log("[Sidebar] Fetching conversations for user:", user._id);
+      const result = await apiService.messages.getConversations();
+      console.log("[Sidebar] Conversations fetch result:", result);
+
+      if (Array.isArray(result)) {
+        setConversations(result);
+        console.log(
+          "[Sidebar] Successfully set conversations:",
+          result.length,
+          "items"
+        );
+      } else {
+        console.log(
+          "[Sidebar] Conversations API returned non-array, setting empty array"
+        );
+        setConversations([]);
+      }
+    } catch (error) {
+      console.error("[Sidebar] Error fetching conversations:", error);
+      setConversationsError(error);
+      setConversations([]);
+    } finally {
+      setConversationsLoading(false);
+    }
+  }, [isAuthenticated, user?._id]);
+
+  // Fetch users function
+  const fetchUsers = useCallback(async () => {
+    if (!isAuthenticated || !user?._id) {
+      console.log("[Sidebar] fetchUsers: Not authenticated or no user ID");
+      return;
+    }
+
+    setUsersLoading(true);
+    setUsersError(null);
+
+    try {
+      console.log("[Sidebar] Fetching users for user:", user._id);
+      const result = await apiService.users.getAllUsers();
+      console.log("[Sidebar] Users fetch result:", result);
+
+      if (Array.isArray(result)) {
+        setUsers(result);
+        console.log(
+          "[Sidebar] Successfully set users:",
+          result.length,
+          "items"
+        );
+      } else {
+        console.log(
+          "[Sidebar] Users API returned non-array, setting empty array"
+        );
+        setUsers([]);
+      }
+    } catch (error) {
+      console.error("[Sidebar] Error fetching users:", error);
+      setUsersError(error);
+      setUsers([]);
+    } finally {
+      setUsersLoading(false);
+    }
+  }, [isAuthenticated, user?._id]);
+
+  // Refetch functions
+  const refetchConversations = useCallback(() => {
+    fetchConversations();
+  }, [fetchConversations]);
+
+  const refetchUsers = useCallback(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  // Auto-fetch data when auth state is ready
+  useEffect(() => {
+    if (isAuthenticated && user?._id && !authLoading) {
+      console.log("[Sidebar] Auth ready, fetching data");
+      fetchConversations();
+      fetchUsers();
+    }
+  }, [isAuthenticated, user?._id, authLoading, fetchConversations, fetchUsers]);
 
   // Create stable search API function
   const searchUsersAPI = useCallback((query) => {
@@ -118,7 +182,7 @@ const Sidebar = ({
     setActiveFilter(newFilter);
   }, []);
 
-  // More intelligent loading state
+  // FIXED: More intelligent loading state
   const loading = useMemo(() => {
     if (authLoading) return false;
     if (!isAuthenticated || !user) return false;
@@ -137,21 +201,28 @@ const Sidebar = ({
     searchTerm,
   ]);
 
-  // FIXED: Removed duplicate filter logic and improved the filtering
-  const filteredItems = useMemo(() => {
+  // Simplified data processing function
+  const getBaseItems = useCallback(() => {
+    console.log("[Sidebar] getBaseItems called with:", {
+      isAuthenticated,
+      userId: user?._id,
+      authLoading,
+      conversationsData: conversations,
+      usersData: users,
+      conversationsLoading,
+      usersLoading,
+    });
+
     if (authLoading || !isAuthenticated || !user) {
+      console.log("[Sidebar] getBaseItems: Not ready for data processing");
       return [];
     }
 
-    const safeConversations = Array.isArray(conversations) ? conversations : [];
-    const safeUsers = Array.isArray(users) ? users : [];
-
-    let items = [];
-
-    // Use search results if searching
-    if (searchTerm.trim() && searchResults) {
-      if (Array.isArray(searchResults)) {
-        items = searchResults.map((searchUser) => ({
+    // Handle search results first
+    if (searchTerm.trim() && searchResults && Array.isArray(searchResults)) {
+      const searchItems = searchResults
+        .filter((searchUser) => searchUser._id !== user._id)
+        .map((searchUser) => ({
           id: searchUser._id,
           user: searchUser,
           lastMessage: {
@@ -165,15 +236,25 @@ const Sidebar = ({
           isMuted: false,
           isGroup: false,
         }));
-      }
-    } else {
-      // Use conversations if available
-      const validConversations = safeConversations.filter(
-        (conv) => conv && conv.user && conv.user._id
+      console.log(
+        "[Sidebar] getBaseItems: Using search results:",
+        searchItems.length
+      );
+      return searchItems;
+    }
+
+    // Process conversations
+    if (
+      conversations &&
+      Array.isArray(conversations) &&
+      conversations.length > 0
+    ) {
+      const validConversations = conversations.filter(
+        (conv) => conv?.user?._id && conv.user._id !== user._id
       );
 
       if (validConversations.length > 0) {
-        items = validConversations.map((conv) => ({
+        const convItems = validConversations.map((conv) => ({
           id: conv._id,
           user: conv.user,
           lastMessage: conv.lastMessage || {
@@ -189,50 +270,84 @@ const Sidebar = ({
           groupName: conv.groupName,
           groupAvatar: conv.groupAvatar,
         }));
-      } else if (safeUsers.length > 0) {
-        // Fallback to users if no conversations
-        items = safeUsers.map((availableUser) => ({
-          id: availableUser._id,
-          user: availableUser,
-          lastMessage: {
-            content: availableUser.status || "Available to chat",
-            createdAt: availableUser.lastSeen || new Date(),
-          },
-          unreadCount: 0,
-          isOnline: onlineUsers.includes(availableUser._id),
-          isPinned: false,
-          isArchived: false,
-          isMuted: false,
-          isGroup: false,
-        }));
+        console.log(
+          "[Sidebar] getBaseItems: Using conversations:",
+          convItems.length
+        );
+        return convItems;
       }
     }
 
-    // Apply filters only once and only if not searching
-    if (!searchTerm.trim()) {
+    // Process users as fallback
+    if (users && Array.isArray(users) && users.length > 0) {
+      const filteredUsers = users.filter(
+        (availableUser) => availableUser._id !== user._id
+      );
+      const userItems = filteredUsers.map((availableUser) => ({
+        id: availableUser._id,
+        user: availableUser,
+        lastMessage: {
+          content: availableUser.status || "Available to chat",
+          createdAt: availableUser.lastSeen || new Date(),
+        },
+        unreadCount: 0,
+        isOnline: onlineUsers.includes(availableUser._id),
+        isPinned: false,
+        isArchived: false,
+        isMuted: false,
+        isGroup: false,
+      }));
+      console.log("[Sidebar] getBaseItems: Using users:", userItems.length);
+      return userItems;
+    }
+
+    console.log("[Sidebar] getBaseItems: No valid data available", {
+      conversationsIsArray: Array.isArray(conversations),
+      conversationsLength: Array.isArray(conversations)
+        ? conversations.length
+        : "N/A",
+      usersIsArray: Array.isArray(users),
+      usersLength: Array.isArray(users) ? users.length : "N/A",
+      conversationsNull: conversations === null,
+      usersNull: users === null,
+    });
+
+    return [];
+  }, [
+    searchTerm,
+    searchResults,
+    conversations,
+    users,
+    onlineUsers,
+    authLoading,
+    isAuthenticated,
+    user,
+    conversationsLoading,
+    usersLoading,
+  ]);
+
+  const applyFilters = useCallback(
+    (items) => {
+      // Apply filters only if not searching
+      if (searchTerm.trim()) return items;
+
       switch (activeFilter) {
         case "unread":
-          items = items.filter((chat) => chat.unreadCount > 0);
-          break;
+          return items.filter((chat) => chat.unreadCount > 0);
         case "archived":
-          items = items.filter((chat) => chat.isArchived);
-          break;
+          return items.filter((chat) => chat.isArchived);
         case "favourites":
-          items = items.filter((chat) => chat.isPinned);
-          break;
+          return items.filter((chat) => chat.isPinned);
         case "groups":
-          items = items.filter((chat) => chat.isGroup);
-          break;
-        case "all":
+          return items.filter((chat) => chat.isGroup);
         default:
-          if (!archived) {
-            items = items.filter((chat) => !chat.isArchived);
-          }
-          break;
+          return archived ? items : items.filter((chat) => !chat.isArchived);
       }
-    }
+    },
+    [activeFilter, searchTerm, archived]
+  );
 
-    // Sort items: pinned first, then by last message time
+  const sortItems = useCallback((items) => {
     return items.sort((a, b) => {
       if (a.isPinned && !b.isPinned) return -1;
       if (!a.isPinned && b.isPinned) return 1;
@@ -241,18 +356,14 @@ const Sidebar = ({
       const bTime = new Date(b.lastMessage?.createdAt || 0);
       return bTime - aTime;
     });
-  }, [
-    searchTerm,
-    searchResults,
-    conversations,
-    users,
-    onlineUsers,
-    activeFilter,
-    authLoading,
-    isAuthenticated,
-    user,
-    archived,
-  ]);
+  }, []);
+
+  const filteredItems = useMemo(() => {
+    const baseItems = getBaseItems();
+    if (!baseItems || baseItems.length === 0) return [];
+    const filtered = applyFilters(baseItems);
+    return sortItems(filtered);
+  }, [getBaseItems, applyFilters, sortItems]);
 
   // Handle search input change
   const handleSearchChange = useCallback(
@@ -279,6 +390,12 @@ const Sidebar = ({
   // Handle user selection with stable callback
   const handleUserSelect = useCallback(
     (chat) => {
+      console.log(
+        "[Sidebar] User selected:",
+        chat.user.username,
+        "unreadCount:",
+        chat.unreadCount
+      );
       onSelectUser(chat.user);
 
       // Mark messages as read when opening a conversation
@@ -286,6 +403,10 @@ const Sidebar = ({
         messageService
           .markMessagesAsRead(chat.user._id)
           .then(() => {
+            console.log(
+              "[Sidebar] Messages marked as read for:",
+              chat.user.username
+            );
             if (conversations) {
               refetchConversations();
             }
@@ -310,84 +431,227 @@ const Sidebar = ({
   // FIXED: More stable logging effects with proper dependencies
   // Debug logging with reduced verbosity
   useEffect(() => {
+    console.log("[Sidebar] Users data state:", {
+      hasUsers: !!users,
+      isArray: Array.isArray(users),
+      length: Array.isArray(users) ? users.length : "N/A",
+      loading: usersLoading,
+      error: usersError?.message,
+      rawData: users, // Log raw data to see structure
+      dataType: typeof users,
+      dataKeys:
+        users && typeof users === "object" && !Array.isArray(users)
+          ? Object.keys(users)
+          : "N/A",
+    });
+
     if (users && Array.isArray(users) && users.length > 0) {
-      console.log(`[Sidebar] Users loaded: ${users.length}`);
+      console.log(
+        `[Sidebar] Users loaded: ${users.length}`,
+        users.map((u) => ({ id: u._id, username: u.username }))
+      );
+    } else if (users && Array.isArray(users) && users.length === 0) {
+      console.log("[Sidebar] Users array is empty");
+    } else if (users && !Array.isArray(users)) {
+      console.log("[Sidebar] Users is not an array:", typeof users, users);
+    } else if (usersError) {
+      console.error("[Sidebar] Users error:", usersError);
     }
-  }, [users]);
+  }, [users, usersLoading, usersError]);
 
   useEffect(() => {
+    console.log("[Sidebar] Conversations data state:", {
+      hasConversations: !!conversations,
+      isArray: Array.isArray(conversations),
+      length: Array.isArray(conversations) ? conversations.length : "N/A",
+      loading: conversationsLoading,
+      error: conversationsError?.message,
+      rawData: conversations, // Log raw data to see structure
+      dataType: typeof conversations,
+      dataKeys:
+        conversations &&
+        typeof conversations === "object" &&
+        !Array.isArray(conversations)
+          ? Object.keys(conversations)
+          : "N/A",
+    });
+
     if (
       conversations &&
       Array.isArray(conversations) &&
       conversations.length > 0
     ) {
-      console.log(`[Sidebar] Chats loaded: ${conversations.length}`);
+      console.log(
+        `[Sidebar] Chats loaded: ${conversations.length}`,
+        conversations.map((c) => ({ id: c._id, user: c.user?.username }))
+      );
+    } else if (
+      conversations &&
+      Array.isArray(conversations) &&
+      conversations.length === 0
+    ) {
+      console.log("[Sidebar] Conversations array is empty");
+    } else if (conversations && !Array.isArray(conversations)) {
+      console.log(
+        "[Sidebar] Conversations is not an array:",
+        typeof conversations,
+        conversations
+      );
+    } else if (conversationsError) {
+      console.error("[Sidebar] Conversations error:", conversationsError);
     }
-  }, [conversations]);
+  }, [conversations, conversationsLoading, conversationsError]);
 
   // Search results logging (only when searching)
   useEffect(() => {
     if (searchTerm.trim() && searchResults && Array.isArray(searchResults)) {
       console.log(
-        `[Sidebar] Search: ${searchResults.length} results for "${searchTerm}"`
+        `[Sidebar] Search: ${searchResults.length} results for "${searchTerm}"`,
+        searchResults.map((u) => ({ id: u._id, username: u.username }))
       );
     }
   }, [searchResults, searchTerm]);
+
+  // Removed periodic refresh to prevent infinite loops - data will refresh on user interactions
 
   // ============ WhatsApp Integration useEffect Hooks ============
 
   // Check WhatsApp linking status
   useEffect(() => {
-    if (user) {
-      const linked = userService.isWhatsAppLinked();
-      setIsWhatsAppLinked(linked);
+    if (user && user._id) {
+      // Check if user has WhatsApp data
+      const hasWhatsAppData =
+        user.wa_id || user.phone_number || user.phone_number_id;
+      setIsWhatsAppLinked(hasWhatsAppData);
 
-      if (linked) {
-        const profile = userService.getWhatsAppProfile();
+      if (hasWhatsAppData) {
+        const profile = {
+          wa_id: user.wa_id,
+          phone_number: user.phone_number,
+          phone_number_id: user.phone_number_id,
+          whatsapp_name: user.whatsapp_name || user.username,
+          is_business: !!user.phone_number_id,
+        };
         setWhatsappProfile(profile);
+      } else {
+        setWhatsappProfile(null);
       }
     }
   }, [user]);
 
   // WhatsApp handlers
-  const handleLinkWhatsApp = useCallback(async (whatsappData) => {
-    try {
-      await userService.linkWhatsAppAccount(whatsappData);
-      setIsWhatsAppLinked(true);
-      const profile = userService.getWhatsAppProfile();
-      setWhatsappProfile(profile);
-      setShowWhatsAppSettings(false);
-    } catch (error) {
-      console.error("Failed to link WhatsApp account:", error);
-      alert("Failed to link WhatsApp account: " + error.message);
-    }
-  }, []);
+  // Handle WhatsApp linking with proper API integration
+  const handleLinkWhatsApp = useCallback(
+    async (whatsappData) => {
+      try {
+        // Validate phone number first
+        if (!whatsappData.phone_number) {
+          throw new Error("Phone number is required");
+        }
+
+        // Basic phone number validation
+        const phoneRegex = /^\+\d{1,3}\d{10,14}$/;
+        if (!phoneRegex.test(whatsappData.phone_number)) {
+          throw new Error(
+            "Please enter a valid phone number with country code (e.g., +1234567890)"
+          );
+        }
+
+        // Update user profile with WhatsApp data
+        const updateData = {
+          wa_id: whatsappData.wa_id,
+          phone_number: whatsappData.phone_number.replace("+", ""),
+          phone_number_id: whatsappData.phone_number_id,
+          whatsapp_name: whatsappData.whatsapp_name || user?.username,
+        };
+
+        // Use userService to update profile
+        await userService.updateProfile(updateData);
+
+        setIsWhatsAppLinked(true);
+        const profile = {
+          ...updateData,
+          phone_number: whatsappData.phone_number.replace("+", ""),
+          is_business: !!whatsappData.phone_number_id,
+        };
+        setWhatsappProfile(profile);
+        setShowWhatsAppSettings(false);
+
+        // Refresh user data to get updated WhatsApp info
+        await refetchUsers();
+
+        console.log("[Sidebar] WhatsApp account linked successfully");
+        return profile;
+      } catch (error) {
+        console.error("Failed to link WhatsApp account:", error);
+        alert(`Failed to link WhatsApp account: ${error.message}`);
+        throw error;
+      }
+    },
+    [refetchUsers, user]
+  );
 
   const handleUnlinkWhatsApp = useCallback(async () => {
     try {
-      await userService.unlinkWhatsAppAccount();
+      // Remove WhatsApp data from user profile
+      const updateData = {
+        wa_id: null,
+        phone_number: null,
+        phone_number_id: null,
+        whatsapp_name: null,
+      };
+
+      await userService.updateProfile(updateData);
+
       setIsWhatsAppLinked(false);
       setWhatsappProfile(null);
+
+      // Refresh user data to reflect the unlink
+      await refetchUsers();
+
+      console.log("[Sidebar] WhatsApp account unlinked successfully");
     } catch (error) {
       console.error("Failed to unlink WhatsApp account:", error);
-      alert("Failed to unlink WhatsApp account: " + error.message);
+      alert(`Failed to unlink WhatsApp account: ${error.message}`);
+      throw error;
     }
-  }, []);
+  }, [refetchUsers]);
 
   const handlePhoneSearch = useCallback(
     async (phoneNumber) => {
       try {
-        const user = await userService.getUserByPhone(phoneNumber);
-        if (user && onSelectUser) {
-          onSelectUser(user);
+        // Validate phone number first
+        if (!phoneNumber) {
+          alert("Please enter a phone number");
+          return;
+        }
+
+        // Basic phone number validation
+        const phoneRegex = /^\+\d{1,3}\d{10,14}$/;
+        if (!phoneRegex.test(phoneNumber)) {
+          alert(
+            "Please enter a valid phone number with country code (e.g., +1234567890)"
+          );
+          return;
+        }
+
+        // Clean phone number (remove + for search)
+        const cleanPhone = phoneNumber.replace("+", "");
+
+        // Search for user by phone number
+        const foundUser = await userService.getUserByPhone(cleanPhone);
+
+        if (foundUser && onSelectUser) {
+          onSelectUser(foundUser);
           setShowPhoneSearch(false);
           setPhoneSearchQuery("");
+          console.log("[Sidebar] User found by phone:", foundUser.username);
         } else {
           alert("No user found with that phone number");
         }
       } catch (error) {
         console.error("Phone search failed:", error);
-        alert("Phone search failed: " + error.message);
+        alert(`Phone search failed: ${error.message}`);
       }
     },
     [onSelectUser]
@@ -395,552 +659,145 @@ const Sidebar = ({
 
   if (showProfile) {
     return (
-      <div className="w-full md:w-80 bg-wa-panel-header flex flex-col h-full">
-        {/* Profile Header */}
-        <div className="bg-wa-primary p-4 text-white flex items-center">
-          <button
-            onClick={() => setShowProfile(false)}
-            className="mr-4 p-2 hover:bg-wa-primary-dark rounded-full transition-colors"
-          >
-            <FaArrowLeft />
-          </button>
-          <h2 className="text-lg font-medium">Profile</h2>
-        </div>
-
-        {/* Profile Content */}
-        <div className="flex-1 bg-wa-bg p-6">
-          <div className="text-center">
-            <Avatar
-              src={user?.profilePicture}
-              username={user?.username}
-              size="2xl"
-              className="mx-auto mb-4"
-            />
-            <h3 className="text-xl font-medium text-wa-text mb-2">
-              {user?.username}
-            </h3>
-            <p className="text-wa-text-secondary mb-4">{user?.email}</p>
-            <p className="text-sm text-wa-text-secondary bg-wa-panel p-3 rounded-lg">
-              {user?.status || "Hey there! I am using WhatsApp"}
-            </p>
-          </div>
-
-          <button
-            onClick={handleLogout}
-            className="w-full mt-8 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors"
-          >
-            Logout
-          </button>
-        </div>
-      </div>
+      <SidebarProfile
+        user={user}
+        setShowProfile={setShowProfile}
+        handleLogout={handleLogout}
+      />
     );
   }
 
   return (
-    <div className="w-full h-full bg-wa-panel flex flex-col">
-      {/* Header */}
-      <div className="bg-wa-panel-header">
-        <div className="px-4 py-2 flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-wa-text">
-            {archived ? "Archived" : starred ? "Starred" : "WhatsApp"}
-          </h1>
-          <div className="flex items-center space-x-2">
-            <button
-              className="p-2 text-wa-text-secondary hover:bg-wa-input-panel rounded-full transition-colors"
-              onClick={() => setShowPhoneSearch(true)}
-              title="Search by phone number"
-            >
-              <FaPhone className="w-4 h-4" />
-            </button>
-            <button
-              className={`p-2 rounded-full transition-colors ${
-                isWhatsAppLinked
-                  ? "text-green-600 hover:bg-green-100"
-                  : "text-wa-text-secondary hover:bg-wa-input-panel"
-              }`}
-              onClick={() => setShowWhatsAppSettings(true)}
-              title={
-                isWhatsAppLinked ? "WhatsApp linked" : "Link WhatsApp account"
-              }
-            >
-              <FaWhatsapp className="w-5 h-5" />
-            </button>
-            <button className="p-2 text-wa-text-secondary hover:bg-wa-input-panel rounded-full transition-colors">
-              <FaUsers className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => setShowProfile(true)}
-              className="p-2 text-wa-text-secondary hover:bg-wa-input-panel rounded-full transition-colors"
-            >
-              <FaUser className="w-4 h-4" />
-            </button>
-            <button className="p-2 text-wa-text-secondary hover:bg-wa-input-panel rounded-full transition-colors">
-              <MdChatBubble className="w-5 h-5" />
-            </button>
-            <button className="p-2 text-wa-text-secondary hover:bg-wa-input-panel rounded-full transition-colors">
-              <BsThreeDotsVertical className="w-5 h-5" />
-            </button>
-          </div>
+    <div className="whatsapp-sidebar">
+      {/* Left Navigation - Always visible on desktop */}
+      <div className="hidden md:flex">
+        <LeftNavigation
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          setShowProfile={setShowProfile}
+          setShowWhatsAppSettings={setShowWhatsAppSettings}
+        />
+      </div>
+
+      {/* Main Sidebar Content */}
+      <div className="main-sidebar-content border-r border-wa-border">
+        {/* Header */}
+        <div className="flex-shrink-0">
+          <SidebarHeader
+            archived={archived}
+            starred={starred}
+            onMobileMenuClick={() => setShowMobileMenu(true)}
+          />
         </div>
 
         {/* Search Bar */}
-        <div className="px-3 py-2">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <FaSearch className="h-4 w-4 text-wa-text-secondary" />
-            </div>
-            <input
-              type="text"
-              placeholder="Search or start a new chat"
-              value={searchTerm}
-              className="w-full pl-10 pr-4 py-2 bg-wa-input-panel rounded-lg text-wa-text placeholder-wa-text-secondary focus:outline-none focus:bg-wa-input transition-all duration-200"
-              onChange={(e) => handleSearchChange(e.target.value)}
+        <div className="flex-shrink-0">
+          <SidebarSearchBar
+            searchTerm={searchTerm}
+            handleSearchChange={handleSearchChange}
+          />
+        </div>
+
+        {/* Filter Tabs */}
+        <div className="flex-shrink-0">
+          <SidebarFilterTabs
+            archived={archived}
+            starred={starred}
+            activeFilter={activeFilter}
+            handleFilterChange={handleFilterChange}
+          />
+        </div>
+
+        {/* Content Area - Scrollable */}
+        <div className="flex-1 overflow-hidden">
+          <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-wa-text-tertiary scrollbar-track-transparent hover:scrollbar-thumb-wa-text-secondary">
+            {/* Show loading only when actually loading data, not during auth loading */}
+            {!authLoading && loading ? (
+              <div className="p-8 text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-wa-primary border-t-transparent mx-auto mb-4"></div>
+                <p className="text-wa-text-secondary text-sm">
+                  Loading chats...
+                </p>
+              </div>
+            ) : null}
+
+            {/* Show auth loading state */}
+            {authLoading ? (
+              <div className="p-8 text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-wa-primary border-t-transparent mx-auto mb-4"></div>
+                <p className="text-wa-text-secondary text-sm">
+                  Authenticating...
+                </p>
+              </div>
+            ) : null}
+
+            {/* Show empty state when not loading and no data */}
+            {!authLoading && !loading && filteredItems.length === 0 && (
+              <SidebarEmptyState
+                searchTerm={searchTerm}
+                archived={archived}
+                starred={starred}
+                activeFilter={activeFilter}
+                conversationsError={conversationsError}
+                usersError={usersError}
+              />
+            )}
+
+            {/* Show chat list when data is available */}
+            {!authLoading && !loading && filteredItems.length > 0 && (
+              <SidebarChatList
+                filteredItems={filteredItems}
+                selectedUser={selectedUser}
+                handleUserSelect={handleUserSelect}
+              />
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Navigation Overlay */}
+      {showMobileMenu && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div
+            className="absolute inset-0 bg-black bg-opacity-50"
+            onClick={() => setShowMobileMenu(false)}
+          ></div>
+          <div className="absolute left-0 top-0 h-full bg-wa-panel shadow-lg">
+            <LeftNavigation
+              activeTab={activeTab}
+              setActiveTab={(tab) => {
+                setActiveTab(tab);
+                setShowMobileMenu(false);
+              }}
+              setShowProfile={(show) => {
+                setShowProfile(show);
+                setShowMobileMenu(false);
+              }}
+              setShowWhatsAppSettings={(show) => {
+                setShowWhatsAppSettings(show);
+                setShowMobileMenu(false);
+              }}
             />
           </div>
         </div>
-
-        {/* Filter Tabs - Hide when in specific modes */}
-        {!archived && !starred && (
-          <div className="px-3 py-2 flex items-center space-x-2 border-b border-wa-border">
-            <button
-              type="button"
-              tabIndex={0}
-              onClick={() => handleFilterChange("all")}
-              className={clsx(
-                "px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 transition-all focus:outline-none focus:ring-2 focus:ring-wa-primary",
-                activeFilter === "all"
-                  ? "bg-wa-primary/20 text-wa-primary"
-                  : "text-wa-text-secondary hover:bg-wa-input-panel"
-              )}
-              aria-pressed={activeFilter === "all"}
-            >
-              <MdChatBubble className="w-4 h-4" /> All
-            </button>
-            <button
-              type="button"
-              tabIndex={0}
-              onClick={() => handleFilterChange("unread")}
-              className={clsx(
-                "px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 transition-all focus:outline-none focus:ring-2 focus:ring-wa-primary",
-                activeFilter === "unread"
-                  ? "bg-wa-primary/20 text-wa-primary"
-                  : "text-wa-text-secondary hover:bg-wa-input-panel"
-              )}
-              aria-pressed={activeFilter === "unread"}
-            >
-              <span className="inline-block w-2 h-2 bg-wa-primary rounded-full mr-1"></span>
-              Unread
-            </button>
-            <button
-              type="button"
-              tabIndex={0}
-              onClick={() => handleFilterChange("favourites")}
-              className={clsx(
-                "px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 transition-all focus:outline-none focus:ring-2 focus:ring-wa-primary",
-                activeFilter === "favourites"
-                  ? "bg-wa-primary/20 text-wa-primary"
-                  : "text-wa-text-secondary hover:bg-wa-input-panel"
-              )}
-              aria-pressed={activeFilter === "favourites"}
-            >
-              <FaThumbtack className="w-3 h-3" /> Favourites
-            </button>
-            <button
-              type="button"
-              tabIndex={0}
-              onClick={() => handleFilterChange("groups")}
-              className={clsx(
-                "px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 transition-all focus:outline-none focus:ring-2 focus:ring-wa-primary",
-                activeFilter === "groups"
-                  ? "bg-wa-primary/20 text-wa-primary"
-                  : "text-wa-text-secondary hover:bg-wa-input-panel"
-              )}
-              aria-pressed={activeFilter === "groups"}
-            >
-              <FaUsers className="w-3 h-3" /> Groups
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Content Area */}
-      <div className="flex-1 overflow-y-auto bg-wa-bg">
-        {/* Show loading only when actually loading data, not during auth loading */}
-        {!authLoading && loading ? (
-          <div className="p-8 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-2 border-wa-primary border-t-transparent mx-auto mb-4"></div>
-            <p className="text-wa-text-secondary">Loading chats...</p>
-          </div>
-        ) : null}
-
-        {/* Show auth loading state */}
-        {authLoading ? (
-          <div className="p-8 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-2 border-wa-primary border-t-transparent mx-auto mb-4"></div>
-            <p className="text-wa-text-secondary">Authenticating...</p>
-          </div>
-        ) : null}
-
-        {/* Show empty state when not loading and no data */}
-        {!authLoading && !loading && filteredItems.length === 0 && (
-          <div className="p-8 text-center">
-            <div className="text-wa-text-secondary mb-4">
-              {(() => {
-                if (searchTerm) return "No results found";
-                if (archived) return "No archived chats";
-                if (starred) return "No starred messages";
-                if (activeFilter === "unread") return "No unread chats";
-                if (activeFilter === "groups") return "No groups";
-                if (activeFilter === "favourites") return "No favourite chats";
-                return "No chats available";
-              })()}
-            </div>
-
-            {/* Show error message if there are API errors */}
-            {(conversationsError || usersError) && (
-              <div className="text-red-500 text-sm mb-4">
-                {conversationsError && (
-                  <div>
-                    Failed to load conversations: {conversationsError.message}
-                  </div>
-                )}
-                {usersError && (
-                  <div>Failed to load users: {usersError.message}</div>
-                )}
-              </div>
-            )}
-
-            {!searchTerm && !archived && !starred && isAuthenticated && (
-              <div className="mt-4 space-y-2">
-                <div className="flex gap-2 justify-center">
-                  <button
-                    onClick={refetchUsers}
-                    className="text-wa-primary hover:underline"
-                  >
-                    Refresh Users
-                  </button>
-                  <span className="text-wa-text-secondary">|</span>
-                  <button
-                    onClick={refetchConversations}
-                    className="text-wa-primary hover:underline"
-                  >
-                    Refresh Chats
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Show chat list when data is available */}
-        {!authLoading && !loading && filteredItems.length > 0 && (
-          <div>
-            {filteredItems.map((chat) => {
-              const isSelected =
-                selectedUser && selectedUser._id === chat.user._id;
-              const timeStr = formatLastSeen(
-                chat.lastMessage?.createdAt || new Date()
-              );
-
-              return (
-                <button
-                  key={chat.id}
-                  onClick={() => handleUserSelect(chat)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      handleUserSelect(chat);
-                    }
-                  }}
-                  className={clsx(
-                    "w-full flex items-center px-3 py-3 hover:bg-wa-input-panel cursor-pointer transition-colors text-left",
-                    isSelected && "bg-wa-input-panel"
-                  )}
-                >
-                  {/* Avatar */}
-                  <div className="relative mr-3">
-                    <Avatar
-                      src={chat.user.profilePicture}
-                      username={chat.user.username}
-                      size="lg"
-                      showOnline={true}
-                      isOnline={chat.isOnline}
-                    />
-                    {chat.isPinned && (
-                      <div className="absolute -top-1 -right-1 bg-wa-primary rounded-full p-1">
-                        <FaThumbtack className="w-2 h-2 text-white" />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Chat Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <h4 className="font-medium text-wa-text truncate flex items-center">
-                        {chat.isGroup && (
-                          <FaUsers className="w-4 h-4 mr-1 text-wa-text-secondary" />
-                        )}
-                        {chat.user.username}
-                        {chat.user.phone_number && (
-                          <FaWhatsapp
-                            className="w-3 h-3 ml-1 text-green-500"
-                            title="WhatsApp User"
-                          />
-                        )}
-                      </h4>
-                      <div className="flex items-center space-x-1">
-                        <span
-                          className={clsx(
-                            "text-xs",
-                            chat.unreadCount > 0
-                              ? "text-wa-primary font-semibold"
-                              : "text-wa-text-secondary"
-                          )}
-                        >
-                          {timeStr}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex flex-col flex-1 min-w-0">
-                        <p className="text-sm text-wa-text-secondary truncate pr-2">
-                          {truncateText(chat.lastMessage?.content || "", 40)}
-                        </p>
-                        {chat.user.phone_number && (
-                          <p className="text-xs text-wa-text-secondary opacity-75">
-                            +{chat.user.phone_number}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex flex-col items-end space-y-1">
-                        {chat.unreadCount > 0 && (
-                          <span className="bg-wa-primary text-white text-xs rounded-full px-2 py-0.5 min-w-[20px] text-center">
-                            {chat.unreadCount}
-                          </span>
-                        )}
-                        {chat.user.wa_id && (
-                          <div className="flex items-center">
-                            <span className="text-xs px-1 py-0.5 bg-green-100 text-green-800 rounded">
-                              WA
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
+      )}
       {/* WhatsApp Phone Search Modal */}
-      {showPhoneSearch && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-semibold mb-4">
-              Search by Phone Number
-            </h3>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handlePhoneSearch(phoneSearchQuery);
-              }}
-            >
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-2">
-                  Phone Number (with country code)
-                </label>
-                <input
-                  type="tel"
-                  value={phoneSearchQuery}
-                  onChange={(e) => setPhoneSearchQuery(e.target.value)}
-                  placeholder="+1234567890"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                  required
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Include country code (e.g., +1 for US, +91 for India)
-                </p>
-              </div>
-              <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowPhoneSearch(false);
-                    setPhoneSearchQuery("");
-                  }}
-                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
-                >
-                  Search
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
+      <WhatsAppPhoneSearchModal
+        show={showPhoneSearch}
+        phoneSearchQuery={phoneSearchQuery}
+        setPhoneSearchQuery={setPhoneSearchQuery}
+        handlePhoneSearch={handlePhoneSearch}
+        setShowPhoneSearch={setShowPhoneSearch}
+      />
       {/* WhatsApp Settings Modal */}
-      {showWhatsAppSettings && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-lg mx-4">
-            <h3 className="text-lg font-semibold mb-4">WhatsApp Integration</h3>
-
-            {isWhatsAppLinked ? (
-              <div>
-                <div className="flex items-center mb-4 p-4 bg-green-50 rounded-lg">
-                  <FaWhatsapp className="w-8 h-8 text-green-500 mr-3" />
-                  <div>
-                    <h4 className="font-medium text-green-800">
-                      WhatsApp Account Linked
-                    </h4>
-                    {whatsappProfile && (
-                      <div className="text-sm text-green-600">
-                        <p>Phone: +{whatsappProfile.phone_number}</p>
-                        {whatsappProfile.whatsapp_name && (
-                          <p>Name: {whatsappProfile.whatsapp_name}</p>
-                        )}
-                        {whatsappProfile.is_business && (
-                          <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded mt-1">
-                            Business Account
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="mb-6">
-                  <h5 className="font-medium mb-2">Features Available:</h5>
-                  <ul className="text-sm text-gray-600 space-y-1">
-                    <li>✅ Send WhatsApp messages</li>
-                    <li>✅ Receive message status updates</li>
-                    <li>✅ Use WhatsApp templates</li>
-                    <li>✅ Phone number search</li>
-                  </ul>
-                </div>
-
-                <div className="flex justify-between">
-                  <button
-                    onClick={handleUnlinkWhatsApp}
-                    className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 flex items-center"
-                  >
-                    <FaUnlink className="w-4 h-4 mr-2" />
-                    Unlink Account
-                  </button>
-                  <button
-                    onClick={() => setShowWhatsAppSettings(false)}
-                    className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md"
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div>
-                <div className="text-center mb-6">
-                  <FaWhatsapp className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <h4 className="text-lg font-medium mb-2">
-                    Link Your WhatsApp Account
-                  </h4>
-                  <p className="text-gray-600 text-sm">
-                    Connect your WhatsApp Business account to send and receive
-                    messages directly from this chat app.
-                  </p>
-                </div>
-
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const formData = new FormData(e.target);
-                    const whatsappData = {
-                      wa_id: formData.get("wa_id"),
-                      phone_number: formData.get("phone_number"),
-                      phone_number_id: formData.get("phone_number_id"),
-                      whatsapp_name: formData.get("whatsapp_name"),
-                    };
-                    handleLinkWhatsApp(whatsappData);
-                  }}
-                >
-                  <div className="space-y-4 mb-6">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        WhatsApp ID
-                      </label>
-                      <input
-                        name="wa_id"
-                        type="text"
-                        required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                        placeholder="Your WhatsApp ID"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Phone Number
-                      </label>
-                      <input
-                        name="phone_number"
-                        type="tel"
-                        required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                        placeholder="+1234567890"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Phone Number ID
-                      </label>
-                      <input
-                        name="phone_number_id"
-                        type="text"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                        placeholder="WhatsApp Business Phone Number ID"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Display Name
-                      </label>
-                      <input
-                        name="whatsapp_name"
-                        type="text"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                        placeholder="Your display name on WhatsApp"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setShowWhatsAppSettings(false)}
-                      className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 flex items-center"
-                    >
-                      <FaLink className="w-4 h-4 mr-2" />
-                      Link Account
-                    </button>
-                  </div>
-                </form>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      <WhatsAppSettingsModal
+        show={showWhatsAppSettings}
+        isWhatsAppLinked={isWhatsAppLinked}
+        whatsappProfile={whatsappProfile}
+        handleUnlinkWhatsApp={handleUnlinkWhatsApp}
+        setShowWhatsAppSettings={setShowWhatsAppSettings}
+        handleLinkWhatsApp={handleLinkWhatsApp}
+      />
     </div>
   );
 };

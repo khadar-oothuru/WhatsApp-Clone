@@ -159,7 +159,6 @@ const messageSchema = new mongoose.Schema(
 // Index for faster queries
 messageSchema.index({ sender: 1, recipient: 1 });
 messageSchema.index({ conversation: 1, createdAt: -1 });
-messageSchema.index({ whatsapp_message_id: 1 });
 messageSchema.index({ from_phone: 1, to_phone: 1 });
 messageSchema.index({ createdAt: -1 });
 
