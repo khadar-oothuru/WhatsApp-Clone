@@ -18,7 +18,7 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: ["http://localhost:5173", "http://localhost:5174"],
+    origin: ["http://localhost:5173", "https://whatsapp-khadaroothuru.vercel.app"],
     credentials: true,
   },
 });
@@ -26,7 +26,7 @@ const io = new Server(httpServer, {
 // Middleware
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://localhost:5174"],
+    origin: ["http://localhost:5173", "https://whatsapp-khadaroothuru.vercel.app"],
     credentials: true,
   })
 );
