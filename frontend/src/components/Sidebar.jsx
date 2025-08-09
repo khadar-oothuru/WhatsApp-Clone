@@ -65,7 +65,13 @@ const Sidebar = ({
   const [isWhatsAppLinked, setIsWhatsAppLinked] = useState(false);
   const [whatsappProfile, setWhatsappProfile] = useState(null);
 
-  const { user, logout, isAuthenticated, loading: authLoading } = useAuth();
+  const {
+    user,
+    logout,
+    isAuthenticated,
+    loading: authLoading,
+    updateUser,
+  } = useAuth();
 
   // Update search term when external searchQuery changes
   useEffect(() => {
@@ -348,23 +354,40 @@ const Sidebar = ({
     usersLoading,
   ]);
 
+  // Improved filter logic for clarity and maintainability
   const applyFilters = useCallback(
     (items) => {
-      // Apply filters only if not searching
-      if (searchTerm.trim()) return items;
+      // Only apply filters if not searching (searchTerm < 2 chars)
+      if (searchTerm.trim().length >= 2) return items;
 
+      let filtered = items;
       switch (activeFilter) {
         case "unread":
-          return items.filter((chat) => chat.unreadCount > 0);
+          filtered = filtered.filter(
+            (chat) => chat.unreadCount > 0 && !chat.isArchived
+          );
+          break;
         case "archived":
-          return items.filter((chat) => chat.isArchived);
+          filtered = filtered.filter((chat) => chat.isArchived);
+          break;
         case "favourites":
-          return items.filter((chat) => chat.isPinned);
+          filtered = filtered.filter(
+            (chat) => chat.isPinned && !chat.isArchived
+          );
+          break;
         case "groups":
-          return items.filter((chat) => chat.isGroup);
+          filtered = filtered.filter(
+            (chat) => chat.isGroup && !chat.isArchived
+          );
+          break;
+        case "all":
         default:
-          return archived ? items : items.filter((chat) => !chat.isArchived);
+          filtered = archived
+            ? filtered.filter((chat) => chat.isArchived)
+            : filtered.filter((chat) => !chat.isArchived);
+          break;
       }
+      return filtered;
     },
     [activeFilter, searchTerm, archived]
   );
@@ -392,7 +415,8 @@ const Sidebar = ({
     (value) => {
       setSearchTerm(value);
 
-      if (!value.trim()) {
+      if (!value.trim() || value.trim().length < 2) {
+        // No search for less than 2 chars
         return;
       }
 
@@ -441,6 +465,22 @@ const Sidebar = ({
     [onSelectUser, conversations, refetchConversations]
   );
 
+  // Handle user profile update
+  const handleUserUpdate = useCallback(
+    (updatedUser) => {
+      // Update the user in AuthContext if updateUser function is available
+      if (updateUser) {
+        updateUser(updatedUser);
+      }
+
+      // Refresh users list to reflect changes
+      refetchUsers();
+
+      console.log("[Sidebar] User profile updated:", updatedUser);
+    },
+    [updateUser, refetchUsers]
+  );
+
   // Handle logout
   const handleLogout = async () => {
     try {
@@ -450,36 +490,7 @@ const Sidebar = ({
     }
   };
 
-  // FIXED: More stable logging effects with proper dependencies
-  // Debug logging with reduced verbosity
-  useEffect(() => {
-    console.log("[Sidebar] Users data state:", {
-      hasUsers: !!users,
-      isArray: Array.isArray(users),
-      length: Array.isArray(users) ? users.length : "N/A",
-      loading: usersLoading,
-      error: usersError?.message,
-      rawData: users, // Log raw data to see structure
-      dataType: typeof users,
-      dataKeys:
-        users && typeof users === "object" && !Array.isArray(users)
-          ? Object.keys(users)
-          : "N/A",
-    });
-
-    if (users && Array.isArray(users) && users.length > 0) {
-      console.log(
-        `[Sidebar] Users loaded: ${users.length}`,
-        users.map((u) => ({ id: u._id, username: u.username }))
-      );
-    } else if (users && Array.isArray(users) && users.length === 0) {
-      console.log("[Sidebar] Users array is empty");
-    } else if (users && !Array.isArray(users)) {
-      console.log("[Sidebar] Users is not an array:", typeof users, users);
-    } else if (usersError) {
-      console.error("[Sidebar] Users error:", usersError);
-    }
-  }, [users, usersLoading, usersError]);
+  // ...existing code...
 
   useEffect(() => {
     console.log("[Sidebar] Conversations data state:", {
@@ -685,6 +696,7 @@ const Sidebar = ({
         user={user}
         setShowProfile={setShowProfile}
         handleLogout={handleLogout}
+        onUserUpdate={handleUserUpdate}
       />
     );
   }

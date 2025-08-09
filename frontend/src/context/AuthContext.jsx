@@ -35,6 +35,12 @@ const authReducer = (state, action) => {
         loading: false,
         error: null,
       };
+    case "UPDATE_USER":
+      return {
+        ...state,
+        user: { ...state.user, ...action.payload },
+        loading: false,
+      };
     case "AUTH_ERROR":
       return {
         ...state,
@@ -151,6 +157,27 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: "CLEAR_ERROR" });
   }, []);
 
+  const updateUser = useCallback(
+    (updatedUserData) => {
+      try {
+        // Update localStorage
+        const updatedUser = { ...state.user, ...updatedUserData };
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+
+        // Update state
+        dispatch({
+          type: "UPDATE_USER",
+          payload: updatedUserData,
+        });
+
+        console.log("[AuthContext] User updated:", updatedUserData);
+      } catch (error) {
+        console.error("AuthContext: Error updating user:", error);
+      }
+    },
+    [state.user]
+  );
+
   const value = useMemo(
     () => ({
       ...state,
@@ -158,8 +185,9 @@ export const AuthProvider = ({ children }) => {
       register,
       logout,
       clearError,
+      updateUser,
     }),
-    [state, login, register, logout, clearError]
+    [state, login, register, logout, clearError, updateUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
